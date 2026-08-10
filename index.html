@@ -1,0 +1,1917 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>360° 摇杆贪吃蛇 v5</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; }
+        html,body { width:100%; height:100%; overflow:hidden; background:#1a1a2e; touch-action:manipulation; }
+        body { display:flex; justify-content:center; align-items:center; font-family:'Segoe UI',system-ui,sans-serif; }
+        .game-wrapper { width:100%; max-width:520px; height:100vh; height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:8px; }
+
+        /* Header */
+        .header { display:flex; justify-content:space-between; align-items:center; width:100%; padding:0 4px; flex-shrink:0; }
+        .score-panel { background:rgba(255,255,255,0.08); border-radius:12px; padding:8px 18px; color:#e0e0e0; font-weight:600; backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.12); display:flex; gap:20px; }
+        .score-panel .label { font-size:10px; letter-spacing:1.2px; color:#888; }
+        .score-panel .value { font-size:19px; font-weight:700; color:#fff; }
+        .score-item { text-align:center; }
+        .header-right { display:flex; gap:8px; align-items:center; }
+        .player-name-tag { background:rgba(255,255,255,0.1); border-radius:8px; padding:5px 10px; font-size:11px; font-weight:600; color:#fff; border:1px solid rgba(255,255,255,0.2); max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .rename-link { color:#ff5252; font-size:10px; cursor:pointer; text-decoration:underline; flex-shrink:0; }
+        .difficulty-badge { background:rgba(255,255,255,0.1); border-radius:8px; padding:5px 12px; font-size:12px; font-weight:700; letter-spacing:0.5px; }
+        .difficulty-badge.easy { color:#66bb6a; border:1px solid rgba(76,175,80,0.5); }
+        .difficulty-badge.normal { color:#ffa726; border:1px solid rgba(255,167,38,0.5); }
+        .difficulty-badge.hard { color:#ef5350; border:1px solid rgba(239,83,80,0.5); }
+        .difficulty-badge.custom { color:#64b5f6; border:1px solid rgba(100,181,246,0.5); }
+        .btn { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:8px 16px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.15s; backdrop-filter:blur(8px); }
+        .btn:active { background:rgba(255,255,255,0.25); transform:scale(0.95); }
+        .btn-primary { background:rgba(76,175,80,0.3); border-color:rgba(76,175,80,0.5); }
+        .btn-accent { background:rgba(100,181,246,0.3); border-color:rgba(100,181,246,0.5); }
+
+        /* Canvas */
+        .canvas-container { position:relative; flex-shrink:0; border-radius:16px; box-shadow:0 0 60px rgba(80,80,255,0.15),0 0 0 2px rgba(255,255,255,0.08); }
+        canvas { display:block; border-radius:16px; background:#0f0f23; width:100%; height:auto; }
+
+        /* Overlays */
+        .full-overlay { position:absolute; top:0; left:0; right:0; bottom:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(5,5,20,0.85); border-radius:16px; z-index:10; transition:opacity 0.3s; opacity:1; pointer-events:all; }
+        .full-overlay.hidden { opacity:0; pointer-events:none; }
+
+        /* Initial Diff Select */
+        .diff-select { gap:10px; }
+        .diff-select h2 { color:#fff; font-size:clamp(22px,5vw,28px); font-weight:700; }
+        .diff-select .subtitle { color:rgba(255,255,255,0.45); font-size:13px; margin-bottom:6px; }
+        .diff-options { display:flex; flex-direction:column; gap:10px; width:min(280px,75vw); }
+        .diff-card { background:rgba(255,255,255,0.05); border:2px solid rgba(255,255,255,0.12); border-radius:14px; padding:14px 18px; color:#fff; cursor:pointer; display:flex; align-items:center; gap:14px; transition:all 0.2s; }
+        .diff-card:active { transform:scale(0.97); }
+        .diff-card.easy:active { border-color:#4caf50; background:rgba(76,175,80,0.12); }
+        .diff-card.normal:active { border-color:#ffa726; background:rgba(255,167,38,0.12); }
+        .diff-card.hard:active { border-color:#ef5350; background:rgba(239,83,80,0.12); }
+        .diff-icon { font-size:32px; flex-shrink:0; width:44px; text-align:center; }
+        .diff-info { display:flex; flex-direction:column; gap:3px; }
+        .diff-name { font-size:18px; font-weight:700; }
+        .diff-card.easy .diff-name { color:#66bb6a; }
+        .diff-card.normal .diff-name { color:#ffa726; }
+        .diff-card.hard .diff-name { color:#ef5350; }
+        .diff-desc { font-size:12px; color:rgba(255,255,255,0.5); line-height:1.4; }
+
+        /* Name Input */
+        .name-overlay { gap:16px; z-index:20; }
+        .name-overlay h2 { color:#fff; font-size:clamp(20px,5vw,26px); }
+        .name-overlay .name-subtitle { color:rgba(255,255,255,0.5); font-size:13px; }
+        .name-overlay input { background:rgba(255,255,255,0.1); border:2px solid rgba(255,255,255,0.2); border-radius:12px; padding:12px 16px; color:#fff; font-size:18px; font-weight:600; text-align:center; width:min(220px,60vw); outline:none; transition:border-color 0.2s; }
+        .name-overlay input:focus { border-color:rgba(76,175,80,0.6); }
+        .name-overlay input::placeholder { color:rgba(255,255,255,0.3); }
+        .name-overlay .name-btns { display:flex; gap:10px; }
+        .name-overlay .btn-ghost { background:rgba(255,255,255,0.05); border-color:rgba(255,255,255,0.15); color:rgba(255,255,255,0.6); }
+
+        /* ─── Game Over (4-tab layout) ─────────── */
+        .gameover-overlay { flex-direction:column; gap:0; padding:8px; align-items:stretch; justify-content:flex-start; }
+        .go-header { text-align:center; padding:4px 0 8px; flex-shrink:0; }
+        .go-header h2 { color:#ff6b6b; font-size:clamp(18px,5vw,24px); text-shadow:0 0 20px rgba(255,107,107,0.5); }
+        .go-header .final-score { color:#fff; font-size:16px; font-weight:600; }
+        .go-header .final-diff { color:rgba(255,255,255,0.4); font-size:11px; }
+
+        /* Tab bar */
+        .go-tabs { display:flex; gap:0; margin-bottom:8px; border-radius:10px; overflow:hidden; flex-shrink:0; }
+        .go-tab { flex:1; padding:8px 0; text-align:center; font-size:11px; font-weight:700; background:rgba(255,255,255,0.04); color:rgba(255,255,255,0.35); cursor:pointer; transition:all 0.2s; border:none; }
+        .go-tab.active { background:rgba(255,255,255,0.12); color:#fff; }
+
+        /* Tab panels */
+        .go-panels { flex:1; overflow:hidden; min-height:0; position:relative; }
+        .go-panel { position:absolute; top:0;left:0;right:0;bottom:0; overflow-y:auto; display:none; flex-direction:column; -webkit-overflow-scrolling:touch; scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.1) transparent; }
+        .go-panel.active { display:flex; }
+
+        /* Panel: Settings */
+        .setting-group { margin-bottom:14px; }
+        .setting-label { color:rgba(255,255,255,0.7); font-size:12px; font-weight:600; margin-bottom:6px; display:flex; justify-content:space-between; }
+        .setting-val { color:rgba(255,255,255,0.4); font-weight:400; }
+
+        /* Color picker */
+        .color-options { display:flex; gap:8px; flex-wrap:wrap; }
+        .color-dot { width:36px; height:36px; border-radius:50%; cursor:pointer; border:3px solid transparent; transition:all 0.15s; }
+        .color-dot:active { transform:scale(0.9); }
+        .color-dot.selected { border-color:#fff; box-shadow:0 0 12px currentColor; }
+        .color-dot.green { background:#4caf50; color:#4caf50; }
+        .color-dot.blue { background:#42a5f5; color:#42a5f5; }
+        .color-dot.purple { background:#ab47bc; color:#ab47bc; }
+        .color-dot.orange { background:#ff7043; color:#ff7043; }
+        .color-dot.pink { background:#ec407a; color:#ec407a; }
+        .color-dot.yellow { background:#fdd835; color:#fdd835; }
+        .color-dot.cyan { background:#26c6da; color:#26c6da; }
+        .color-dot.white { background:#e0e0e0; color:#e0e0e0; }
+        .color-dot.rainbow { background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red); color:#fff; border-color:rgba(255,255,255,0.3); }
+        .color-dot.rainbow.selected { border-color:#fff; box-shadow:0 0 14px rgba(255,255,255,0.7); }
+
+        /* Sliders */
+        .slider-container { position:relative; height:40px; display:flex; align-items:center; }
+        .slider-track { position:absolute; left:0;right:0;height:6px; background:rgba(255,255,255,0.1); border-radius:3px; }
+        .slider-fill { position:absolute; left:0;height:6px; background:rgba(100,181,246,0.5); border-radius:3px; transition:width 0.05s; }
+        .slider-input { position:absolute; left:0;right:0; width:100%; height:40px; opacity:0; cursor:pointer; margin:0; -webkit-appearance:none; }
+        .slider-input::-webkit-slider-thumb { -webkit-appearance:none; width:28px; height:28px; border-radius:50%; background:#fff; border:2px solid rgba(100,181,246,0.8); box-shadow:0 2px 8px rgba(0,0,0,0.3); cursor:pointer; pointer-events:all; }
+        .slider-ticks { display:flex; justify-content:space-between; font-size:9px; color:rgba(255,255,255,0.3); padding:0 2px; margin-top:-4px; }
+
+        /* Panel: Leaderboard */
+        .lb-tabs { display:flex; gap:0; margin-bottom:6px; border-radius:8px; overflow:hidden; flex-shrink:0; }
+        .lb-tab { flex:1; padding:5px 0; text-align:center; font-size:10px; font-weight:700; background:rgba(255,255,255,0.04); color:rgba(255,255,255,0.35); cursor:pointer; transition:all 0.2s; border:none; }
+        .lb-tab.active.easy { background:rgba(76,175,80,0.2); color:#66bb6a; }
+        .lb-tab.active.normal { background:rgba(255,167,38,0.2); color:#ffa726; }
+        .lb-tab.active.hard { background:rgba(239,83,80,0.2); color:#ef5350; }
+        .lb-list { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:3px; min-height:0; padding-right:4px; }
+        .lb-item { display:flex; align-items:center; padding:4px 8px; border-radius:6px; background:rgba(255,255,255,0.04); font-size:11px; flex-shrink:0; gap:4px; }
+        .lb-rank { width:18px; font-weight:700; font-size:11px; color:rgba(255,255,255,0.35); flex-shrink:0; }
+        .lb-rank.top1 { color:#ffd700; } .lb-rank.top2 { color:#c0c0c0; } .lb-rank.top3 { color:#cd7f32; }
+        .lb-name { flex:1; color:#fff; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .lb-score { font-weight:700; color:#fff; margin-left:auto; flex-shrink:0; }
+        .lb-empty { text-align:center; color:rgba(255,255,255,0.2); font-size:11px; padding:12px 0; }
+        .lb-loading { text-align:center; color:rgba(255,255,255,0.3); font-size:11px; padding:12px 0; }
+
+        /* Panel: Ranked */
+        .ranked-diff-options { display:flex; flex-direction:column; gap:8px; }
+        .ranked-diff-btn { background:rgba(255,255,255,0.05); border:2px solid rgba(255,255,255,0.12); border-radius:12px; padding:12px 16px; color:#fff; cursor:pointer; display:flex; align-items:center; gap:12px; transition:all 0.15s; }
+        .ranked-diff-btn:active { transform:scale(0.97); }
+        .ranked-diff-btn.easy:active { border-color:#4caf50; background:rgba(76,175,80,0.12); }
+        .ranked-diff-btn.normal:active { border-color:#ffa726; background:rgba(255,167,38,0.12); }
+        .ranked-diff-btn.hard:active { border-color:#ef5350; background:rgba(239,83,80,0.12); }
+        .ranked-diff-btn .rd-icon { font-size:28px; flex-shrink:0; }
+        .ranked-diff-btn .rd-info { display:flex; flex-direction:column; gap:2px; }
+        .ranked-diff-btn .rd-name { font-size:15px; font-weight:700; }
+        .ranked-diff-btn.easy .rd-name { color:#66bb6a; }
+        .ranked-diff-btn.normal .rd-name { color:#ffa726; }
+        .ranked-diff-btn.hard .rd-name { color:#ef5350; }
+        .ranked-diff-btn .rd-desc { font-size:11px; color:rgba(255,255,255,0.45); }
+
+        /* Panel: Custom */
+        .custom-start-btn { margin-top:14px; width:100%; }
+
+        /* Tail collision toggle */
+        .toggle-group { display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.05); border-radius:10px; padding:10px 14px; margin-bottom:10px; }
+        .toggle-label { color:rgba(255,255,255,0.7); font-size:12px; font-weight:600; }
+        .toggle-switch { position:relative; width:48px; height:28px; flex-shrink:0; cursor:pointer; }
+        .toggle-switch .track { position:absolute; top:0;left:0;right:0;bottom:0; background:rgba(255,255,255,0.15); border-radius:14px; transition:background 0.2s; }
+        .toggle-switch.on .track { background:rgba(76,175,80,0.5); }
+        .toggle-switch .knob { position:absolute; top:3px;left:3px; width:22px;height:22px; border-radius:50%; background:#fff; transition:transform 0.2s; box-shadow:0 1px 4px rgba(0,0,0,0.3); }
+        .toggle-switch.on .knob { transform:translateX(20px); }
+
+        /* Revive overlay */
+        .revive-overlay { gap:14px; z-index:20; }
+        .revive-overlay h2 { color:#ffd740; font-size:clamp(18px,5vw,22px); text-shadow:0 0 16px rgba(255,215,64,0.4); }
+        .revive-overlay .revive-subtitle { color:rgba(255,255,255,0.5); font-size:12px; text-align:center; line-height:1.5; }
+        .revive-overlay .revive-btns { display:flex; gap:10px; }
+        .revive-overlay .btn-revive { background:rgba(255,215,64,0.25); border-color:rgba(255,215,64,0.5); color:#ffd740; }
+        .revive-overlay .btn-reject { background:rgba(255,255,255,0.05); border-color:rgba(255,255,255,0.15); color:rgba(255,255,255,0.5); }
+
+        /* Fail screen */
+        .fail-overlay { display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:19; cursor:pointer; }
+        .fail-overlay.hidden { display:none; }
+        .fail-text { font-size:clamp(48px,12vw,72px); font-weight:900; color:#ff1744; text-shadow:0 0 40px rgba(255,23,68,0.5),0 4px 20px rgba(0,0,0,0.5); letter-spacing:12px; animation:failPulse 1.5s ease-in-out infinite; }
+        @keyframes failPulse { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.05);opacity:0.9;} }
+        .fail-hint { margin-top:18px; font-size:13px; color:rgba(255,255,255,0.4); letter-spacing:2px; }
+
+        /* Joystick */
+        .joystick-zone { position:relative; width:140px; height:140px; flex-shrink:0; }
+        .joystick-base { position:absolute; width:124px; height:124px; top:8px; left:8px; border-radius:50%; background:rgba(255,255,255,0.05); border:3px solid rgba(255,255,255,0.18); box-shadow:inset 0 0 30px rgba(0,0,0,0.3); }
+        .joystick-thumb { position:absolute; width:56px; height:56px; top:42px; left:42px; border-radius:50%; background:radial-gradient(circle at 40% 40%,rgba(120,180,255,0.75),rgba(40,80,200,0.9)); box-shadow:0 4px 20px rgba(60,120,255,0.5); transition:box-shadow 0.15s; }
+        .hint { color:rgba(255,255,255,0.35); font-size:11px; flex-shrink:0; }
+
+        /* Boost skill button */
+        .boost-btn { width:56px; height:56px; border-radius:50%; background:rgba(100,181,246,0.3); border:2px solid rgba(100,181,246,0.6); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:background 0.3s,border-color 0.3s,opacity 0.3s; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+        .boost-btn:active { background:rgba(100,181,246,0.6); }
+        .boost-btn.on-cooldown { background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.15); cursor:not-allowed; }
+        .boost-btn.on-cooldown svg { opacity:0.35; }
+        .boost-btn.hidden { display:none; }
+        @keyframes spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+
+        /* ─── Versus (对战) ─────────────────────── */
+        .versus-menu { display:flex; flex-direction:column; gap:16px; align-items:center; width:100%; }
+        .versus-btn { width:100%; padding:12px 16px; font-size:14px; }
+        .versus-divider { display:flex; align-items:center; gap:10px; width:100%; color:rgba(255,255,255,0.3); font-size:11px; }
+        .versus-divider::before, .versus-divider::after { content:''; flex:1; height:1px; background:rgba(255,255,255,0.1); }
+        .versus-input { width:100%; padding:10px 14px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); border-radius:10px; color:#fff; font-size:16px; text-align:center; letter-spacing:4px; text-transform:uppercase; }
+        .versus-input:focus { outline:none; border-color:rgba(100,180,255,0.5); }
+        .versus-section { width:100%; display:flex; flex-direction:column; gap:8px; }
+
+        /* Versus room overlay */
+        .versus-room-overlay { gap:14px; z-index:15; }
+        .room-code-display { font-size:24px; font-weight:800; letter-spacing:6px; color:#4fc3f7; background:rgba(79,195,247,0.1); padding:8px 20px; border-radius:10px; border:1px solid rgba(79,195,247,0.3); }
+        .versus-player-list { width:100%; max-height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; }
+        .versus-player-item { display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.06); border-radius:10px; padding:10px 14px; }
+        .versus-player-item .vp-left { display:flex; align-items:center; gap:8px; }
+        .versus-player-item .vp-color { width:16px; height:16px; border-radius:50%; flex-shrink:0; }
+        .versus-player-item .vp-name { color:#fff; font-size:13px; font-weight:600; }
+        .versus-player-item .vp-host { font-size:9px; background:rgba(255,215,64,0.2); color:#ffd740; padding:2px 6px; border-radius:4px; }
+        .versus-player-item .vp-ready { font-size:11px; color:#66bb6a; font-weight:600; }
+        .versus-player-item .vp-not-ready { font-size:11px; color:rgba(255,255,255,0.3); }
+        .versus-room-actions { display:flex; gap:8px; width:100%; }
+        .versus-room-actions .btn { flex:1; }
+        .btn-ready.active { background:rgba(76,175,80,0.3); border-color:rgba(76,175,80,0.6); color:#66bb6a; }
+
+        /* Versus dead overlay */
+        .versus-dead-overlay { gap:14px; z-index:18; }
+        .versus-dead-overlay h2 { color:#ff5252; font-size:clamp(20px,5vw,24px); }
+        .dead-ranking { color:rgba(255,255,255,0.5); font-size:14px; }
+        .versus-dead-btns { display:flex; gap:10px; }
+
+        /* Versus game over overlay */
+        .versus-gameover-overlay { gap:12px; z-index:18; }
+        .versus-history-overlay, .versus-detail-overlay, .versus-replay-overlay { gap:10px; z-index:18; }
+        .versus-history-list { display:flex; flex-direction:column; gap:6px; }
+        .history-item { display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.06); border-radius:10px; padding:10px 14px; cursor:pointer; }
+        .history-item:active { background:rgba(255,255,255,0.1); }
+        .history-item .hi-left { display:flex; flex-direction:column; gap:2px; }
+        .history-item .hi-rank { font-size:14px; font-weight:700; color:#ffd740; }
+        .history-item .hi-time { font-size:10px; color:rgba(255,255,255,0.4); }
+        .history-item .hi-duration { font-size:11px; color:rgba(255,255,255,0.5); }
+        .history-detail-section { background:rgba(255,255,255,0.05); border-radius:10px; padding:12px; margin-bottom:8px; }
+        .history-detail-section h3 { color:#fff; font-size:13px; margin-bottom:8px; }
+        .history-player-row { display:flex; justify-content:space-between; align-items:center; padding:6px 8px; font-size:12px; color:rgba(255,255,255,0.7); }
+        .history-player-row .hp-color { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+        .detail-btn { width:100%; padding:10px; margin-top:6px; font-size:12px; }
+        .btn-danger { background:rgba(244,67,54,0.2); border-color:rgba(244,67,54,0.4); color:#ef5350; }
+        .versus-winner { font-size:18px; color:#ffd740; font-weight:700; }
+        .versus-ranking-list { width:100%; max-height:200px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; }
+        .versus-rank-item { display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.05); border-radius:8px; padding:8px 12px; font-size:12px; }
+        .versus-rank-item.me { background:rgba(76,175,80,0.12); }
+        .spectator-badge { position:absolute; top:8px; left:50%; transform:translateX(-50%); background:rgba(255,152,0,0.2); color:#ffb74d; padding:4px 14px; border-radius:8px; font-size:11px; font-weight:600; z-index:5; border:1px solid rgba(255,152,0,0.3); }
+
+        /* Kill notification */
+        .kill-notify { position:absolute; top:40px; left:50%; transform:translateX(-50%) translateY(-10px); background:rgba(0,0,0,0.8); color:#fff; padding:8px 20px; border-radius:10px; font-size:13px; z-index:6; opacity:0; transition:opacity 0.3s, transform 0.3s; pointer-events:none; border:1px solid rgba(255,82,82,0.3); white-space:nowrap; backdrop-filter:blur(8px); }
+        .kill-notify.show { opacity:1; transform:translateX(-50%) translateY(0); }
+        .kill-notify.hidden { display:none; }
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <div class="header">
+            <div class="score-panel">
+                <div class="score-item"><div class="label">得分</div><div class="value" id="score">0</div></div>
+                <div class="score-item"><div class="label">长度</div><div class="value" id="length">0</div></div>
+                <div class="score-item"><div class="label">速度</div><div class="value" id="speed-display">-</div></div>
+            </div>
+            <div class="header-right">
+                <span class="rename-link" id="renameLink" style="display:none;">修改名字</span>
+                <span class="player-name-tag" id="playerNameTag" style="display:none;">-</span>
+                <span class="difficulty-badge easy" id="diffBadge" style="display:none;">-</span>
+                <button class="btn" id="restartBtn" style="display:none;">重新开始</button>
+            </div>
+        </div>
+
+        <div class="canvas-container" id="canvasContainer">
+            <canvas id="gameCanvas"></canvas>
+            <div class="kill-notify hidden" id="killNotify"></div>
+
+            <!-- Initial Menu (same as game over, without game-over header) -->
+            <div class="full-overlay gameover-overlay" id="diffOverlay">
+                <div class="go-header" style="padding-bottom:4px;">
+                    <h2 style="color:#fff;text-shadow:none;">🐍 贪吃蛇</h2>
+                    <div class="final-diff" style="color:rgba(255,255,255,0.4);">选择模式开始游戏</div>
+                </div>
+                <div class="go-tabs">
+                    <button class="go-tab active" data-panel="settings">⚙️ 设置</button>
+                    <button class="go-tab" data-panel="leaderboard">🏆 排行榜</button>
+                    <button class="go-tab" data-panel="ranked">🎯 排位</button>
+                    <button class="go-tab" data-panel="custom">🎮 娱乐</button>
+                    <button class="go-tab" data-panel="versus">⚔️ 对战</button>
+                </div>
+                <div class="go-panels" id="initialPanels">
+                    <div class="go-panel active" id="initialPanelSettings">
+                        <div class="setting-group">
+                            <div class="setting-label"><span>🐍 贪吃蛇颜色</span></div>
+                            <div class="color-options" id="colorOptionsInit">
+                                <div class="color-dot green selected" data-color="green"></div>
+                                <div class="color-dot blue" data-color="blue"></div>
+                                <div class="color-dot purple" data-color="purple"></div>
+                                <div class="color-dot orange" data-color="orange"></div>
+                                <div class="color-dot pink" data-color="pink"></div>
+                                <div class="color-dot yellow" data-color="yellow"></div>
+                                <div class="color-dot cyan" data-color="cyan"></div>
+                                <div class="color-dot white" data-color="white"></div>
+                                <div class="color-dot rainbow" data-color="rainbow"></div>
+                            </div>
+                        </div>
+                        <div class="setting-group">
+                            <div class="setting-label"><span>🎯 操控灵敏度</span><span class="setting-val" id="sensValInit">50%</span></div>
+                            <div class="slider-container">
+                                <div class="slider-track"></div>
+                                <div class="slider-fill" id="sensFillInit" style="width:50%"></div>
+                                <input type="range" class="slider-input" id="sensSliderInit" min="10" max="100" value="50" step="1">
+                            </div>
+                            <div class="slider-ticks"><span>慢</span><span>中</span><span>快</span></div>
+                        </div>
+                    </div>
+                    <div class="go-panel" id="initialPanelLeaderboard">
+                        <div class="lb-tabs" id="lbTabsInit">
+                            <button class="lb-tab easy active" data-tab="easy">简单</button>
+                            <button class="lb-tab normal" data-tab="normal">一般</button>
+                            <button class="lb-tab hard" data-tab="hard">困难</button>
+                        </div>
+                        <div class="lb-list" id="lbListInit"><div class="lb-loading">加载中...</div></div>
+                    </div>
+                    <div class="go-panel" id="initialPanelRanked">
+                        <div class="ranked-diff-options">
+                            <button class="ranked-diff-btn easy" data-diff="easy"><span class="rd-icon">🟢</span><span class="rd-info"><span class="rd-name">简单</span><span class="rd-desc">速度减半 · 碰尾巴不失败 · 计入排行榜</span></span></button>
+                            <button class="ranked-diff-btn normal" data-diff="normal"><span class="rd-icon">🟠</span><span class="rd-info"><span class="rd-name">一般</span><span class="rd-desc">速度适中 · 碰尾巴会失败 · 计入排行榜</span></span></button>
+                            <button class="ranked-diff-btn hard" data-diff="hard"><span class="rd-icon">🔴</span><span class="rd-info"><span class="rd-name">困难</span><span class="rd-desc">原始速度 · 更长身体 · 碰尾巴会失败 · 计入排行榜</span></span></button>
+                        </div>
+                    </div>
+                    <div class="go-panel" id="initialPanelCustom">
+                        <div class="setting-group">
+                            <div class="setting-label"><span>⚡ 自定义速度</span><span class="setting-val" id="customSpeedValInit">1.0x</span></div>
+                            <div class="slider-container">
+                                <div class="slider-track"></div>
+                                <div class="slider-fill" id="customSpeedFillInit" style="width:46%"></div>
+                                <input type="range" class="slider-input" id="customSpeedSliderInit" min="50" max="120" value="100" step="1">
+                            </div>
+                            <div class="slider-ticks"><span>简单(0.5x)</span><span>一般(0.75x)</span><span>困难(1.0x)</span><span>1.2x</span></div>
+                        </div>
+                        <div class="toggle-group" id="tailCollisionToggleInit">
+                            <span class="toggle-label">💥 碰到尾巴即失败</span>
+                            <div class="toggle-switch on" id="tailSwitchInit"><div class="track"></div><div class="knob"></div></div>
+                        </div>
+                        <div style="color:rgba(255,255,255,0.35);font-size:11px;text-align:center;margin-top:4px;" id="customDescInit">娱乐模式 · 成绩不计入排行榜 · 碰尾巴会失败</div>
+                        <button class="btn btn-accent custom-start-btn" id="customStartBtnInit">开始游戏</button>
+                    </div>
+                    <div class="go-panel" id="initialPanelVersus">
+                        <div class="versus-menu">
+                            <div class="versus-section">
+                                <button class="btn btn-accent versus-btn" style="font-size:16px;padding:12px 0;background:rgba(255,160,0,0.3);border-color:rgba(255,160,0,0.6);" onclick="quickMatch()">⚡ 快速匹配</button>
+                            </div>
+                            <div class="versus-divider"><span>或</span></div>
+                            <div class="versus-section">
+                                <button class="btn btn-primary versus-btn" onclick="versusCreateRoom()">🏠 创建房间</button>
+                            </div>
+                            <div class="versus-section">
+                                <button class="btn btn-accent versus-btn" onclick="versusInviteCreate()">📋 复制链接邀请好友</button>
+                            </div>
+                            <div class="versus-divider"><span>或</span></div>
+                            <div class="versus-section">
+                                <input type="text" id="joinRoomInputInit" placeholder="输入房间号" maxlength="4" class="versus-input" autocomplete="off">
+                                <button class="btn btn-accent versus-btn" onclick="versusJoinRoom('init')">加入房间</button>
+                            </div>
+                            <div style="color:rgba(255,255,255,0.3);font-size:11px;text-align:center;line-height:1.5;">对战模式 · 邀请好友<br>撞别人尾巴即失败 · 最后存活者胜</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Name Input -->
+            <div class="full-overlay name-overlay hidden" id="nameOverlay">
+                <h2>🎮 输入你的名字</h2>
+                <div class="name-subtitle">加入全球排行榜</div>
+                <input type="text" id="nameInput" placeholder="你的昵称" maxlength="12" autocomplete="off">
+                <div class="name-btns">
+                    <button class="btn btn-primary" id="nameConfirmBtn">确定</button>
+                    <button class="btn btn-ghost" id="nameSkipBtn">暂不命名</button>
+                </div>
+            </div>
+
+            <!-- Revive (Custom mode only, first death) -->
+            <div class="full-overlay revive-overlay hidden" id="reviveOverlay">
+                <h2>💫 是否复活？</h2>
+                <div class="revive-subtitle" id="reviveSubtitle">保留当前分数 <strong>0</strong> 分重新开始<br>仅限本次死亡，第二次将直接结束</div>
+                <div class="revive-btns">
+                    <button class="btn btn-revive" id="reviveConfirmBtn">复活</button>
+                    <button class="btn btn-reject" id="reviveRejectBtn">拒绝</button>
+                </div>
+            </div>
+
+            <!-- Game Over Fail Screen (before mode selection overlay) -->
+            <div class="full-overlay fail-overlay hidden" id="failOverlay">
+                <div class="fail-text">失败</div>
+                <div class="fail-hint">点击任意位置继续</div>
+            </div>
+
+            <!-- Game Over -->
+            <div class="full-overlay gameover-overlay hidden" id="gameOverOverlay">
+                <div class="go-header">
+                    <h2>失败</h2>
+                    <div class="final-score" id="finalScore">得分: 0</div>
+                    <div class="final-diff" id="finalDiff"></div>
+                </div>
+                <div class="go-tabs">
+                    <button class="go-tab active" data-panel="settings">⚙️ 设置</button>
+                    <button class="go-tab" data-panel="leaderboard">🏆 排行榜</button>
+                    <button class="go-tab" data-panel="ranked">🎯 排位</button>
+                    <button class="go-tab" data-panel="custom">🎮 娱乐</button>
+                    <button class="go-tab" data-panel="versus">⚔️ 对战</button>
+                </div>
+                <div class="go-panels">
+                    <!-- Settings Panel -->
+                    <div class="go-panel active" id="panelSettings">
+                        <div class="setting-group">
+                            <div class="setting-label"><span>🐍 贪吃蛇颜色</span></div>
+                            <div class="color-options" id="colorOptions">
+                                <div class="color-dot green selected" data-color="green"></div>
+                                <div class="color-dot blue" data-color="blue"></div>
+                                <div class="color-dot purple" data-color="purple"></div>
+                                <div class="color-dot orange" data-color="orange"></div>
+                                <div class="color-dot pink" data-color="pink"></div>
+                                <div class="color-dot yellow" data-color="yellow"></div>
+                                <div class="color-dot cyan" data-color="cyan"></div>
+                                <div class="color-dot white" data-color="white"></div>
+                                <div class="color-dot rainbow" data-color="rainbow"></div>
+                            </div>
+                        </div>
+                        <div class="setting-group">
+                            <div class="setting-label"><span>🎯 操控灵敏度</span><span class="setting-val" id="sensVal">50%</span></div>
+                            <div class="slider-container">
+                                <div class="slider-track"></div>
+                                <div class="slider-fill" id="sensFill" style="width:50%"></div>
+                                <input type="range" class="slider-input" id="sensSlider" min="10" max="100" value="50" step="1">
+                            </div>
+                            <div class="slider-ticks"><span>慢</span><span>中</span><span>快</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Leaderboard Panel -->
+                    <div class="go-panel" id="panelLeaderboard">
+                        <div class="lb-tabs" id="lbTabs">
+                            <button class="lb-tab easy active" data-tab="easy">简单</button>
+                            <button class="lb-tab normal" data-tab="normal">一般</button>
+                            <button class="lb-tab hard" data-tab="hard">困难</button>
+                        </div>
+                        <div class="lb-list" id="lbList"><div class="lb-loading">加载中...</div></div>
+                    </div>
+
+                    <!-- Ranked Panel -->
+                    <div class="go-panel" id="panelRanked">
+                        <div class="ranked-diff-options">
+                            <button class="ranked-diff-btn easy" data-diff="easy"><span class="rd-icon">🟢</span><span class="rd-info"><span class="rd-name">简单</span><span class="rd-desc">速度减半 · 碰尾巴不失败 · 计入排行榜</span></span></button>
+                            <button class="ranked-diff-btn normal" data-diff="normal"><span class="rd-icon">🟠</span><span class="rd-info"><span class="rd-name">一般</span><span class="rd-desc">速度适中 · 碰尾巴会失败 · 计入排行榜</span></span></button>
+                            <button class="ranked-diff-btn hard" data-diff="hard"><span class="rd-icon">🔴</span><span class="rd-info"><span class="rd-name">困难</span><span class="rd-desc">原始速度 · 更长身体 · 碰尾巴会失败 · 计入排行榜</span></span></button>
+                        </div>
+                    </div>
+
+                    <!-- Custom Panel -->
+                    <div class="go-panel" id="panelCustom">
+                        <div class="setting-group">
+                            <div class="setting-label"><span>⚡ 自定义速度</span><span class="setting-val" id="customSpeedVal">1.0x</span></div>
+                            <div class="slider-container">
+                                <div class="slider-track"></div>
+                                <div class="slider-fill" id="customSpeedFill" style="width:46%"></div>
+                                <input type="range" class="slider-input" id="customSpeedSlider" min="50" max="120" value="100" step="1">
+                            </div>
+                            <div class="slider-ticks"><span>简单(0.5x)</span><span>一般(0.75x)</span><span>困难(1.0x)</span><span>1.2x</span></div>
+                        </div>
+                        <div class="toggle-group" id="tailCollisionToggle">
+                            <span class="toggle-label">💥 碰到尾巴即失败</span>
+                            <div class="toggle-switch on" id="tailSwitch"><div class="track"></div><div class="knob"></div></div>
+                        </div>
+                        <div style="color:rgba(255,255,255,0.35);font-size:11px;text-align:center;margin-top:4px;" id="customDesc">娱乐模式 · 成绩不计入排行榜 · 碰尾巴会失败</div>
+                        <button class="btn btn-accent custom-start-btn" id="customStartBtn">开始游戏</button>
+                    </div>
+                    <div class="go-panel" id="panelVersus">
+                        <div class="versus-menu">
+                            <div class="versus-section">
+                                <button class="btn btn-accent versus-btn" style="font-size:16px;padding:12px 0;background:rgba(255,160,0,0.3);border-color:rgba(255,160,0,0.6);" onclick="quickMatch()">⚡ 快速匹配</button>
+                            </div>
+                            <div class="versus-divider"><span>或</span></div>
+                            <div class="versus-section">
+                                <button class="btn btn-primary versus-btn" onclick="versusCreateRoom()">🏠 创建房间</button>
+                            </div>
+                            <div class="versus-section">
+                                <button class="btn btn-accent versus-btn" onclick="versusInviteCreate()">📋 复制链接邀请好友</button>
+                            </div>
+                            <div class="versus-divider"><span>或</span></div>
+                            <div class="versus-section">
+                                <input type="text" id="joinRoomInput" placeholder="输入房间号" maxlength="4" class="versus-input" autocomplete="off">
+                                <button class="btn btn-accent versus-btn" onclick="versusJoinRoom()">加入房间</button>
+                            </div>
+                            <div style="color:rgba(255,255,255,0.3);font-size:11px;text-align:center;line-height:1.5;">对战模式 · 邀请好友<br>撞别人尾巴即失败 · 最后存活者胜</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Match Searching Overlay -->
+            <div class="full-overlay quickmatch-overlay hidden" id="quickMatchOverlay" style="z-index:16;">
+                <div style="font-size:48px;animation:spin 1.5s linear infinite;">⚡</div>
+                <h2 style="color:#fff;">正在寻找对手...</h2>
+                <div style="color:rgba(255,255,255,0.5);font-size:13px;" id="quickMatchStatus">已进入匹配队列</div>
+                <button class="btn btn-ghost" id="cancelQuickMatchBtn" style="margin-top:16px;">取消匹配</button>
+            </div>
+
+            <!-- Versus Room Overlay -->
+            <div class="full-overlay versus-room-overlay hidden" id="versusRoomOverlay">
+                <div class="versus-room-header" style="text-align:center;">
+                    <h2 style="color:#fff;">⚔️ 对战房间</h2>
+                </div>
+                <div class="versus-player-list" id="versusPlayerList"></div>
+                <div class="setting-group" style="width:100%;">
+                    <div class="setting-label"><span>🐍 初始长度</span><span class="setting-val" id="versusInitLenVal" style="color:#ff5252;font-size:20px;font-weight:800;">6</span></div>
+                    <div class="slider-container">
+                        <div class="slider-track"></div>
+                        <div class="slider-fill" id="versusInitLenFill" style="width:50%"></div>
+                        <input type="range" class="slider-input" id="versusInitLenSlider" min="2" max="10" value="6" step="1">
+                    </div>
+                    <div class="slider-ticks"><span>2</span><span>6</span><span>10</span></div>
+                </div>
+                <div class="versus-room-actions">
+                    <button class="btn btn-ready" id="versusReadyBtn">准备</button>
+                    <button class="btn btn-primary hidden" id="versusStartBtn">开始游戏</button>
+                    <button class="btn btn-ghost" id="versusLeaveBtn">离开</button>
+                </div>
+                <button class="btn versus-history-btn" id="versusHistoryBtn" style="margin-top:8px;font-size:12px;">📋 历史战绩</button>
+            </div>
+
+            <!-- Versus Dead Overlay -->
+            <div class="full-overlay versus-dead-overlay hidden" id="versusDeadOverlay">
+                <h2>💀 你被淘汰了</h2>
+                <div class="dead-ranking" id="deadRanking">排名: #--</div>
+                <div class="versus-dead-btns">
+                    <button class="btn btn-primary" id="versusSpectateBtn">👁️ 观战</button>
+                    <button class="btn btn-ghost" id="versusExitBtn">🚪 退出</button>
+                </div>
+            </div>
+
+            <!-- Versus Game Over Overlay -->
+            <div class="full-overlay versus-gameover-overlay hidden" id="versusGameOverOverlay">
+                <h2 id="versusGameOverTitle">游戏结束</h2>
+                <div class="versus-winner" id="versusWinnerText"></div>
+                <div class="versus-ranking-list" id="versusRankingList"></div>
+                <div style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:4px;">点击任意位置继续</div>
+            </div>
+
+            <!-- Versus Match History Overlay -->
+            <div class="full-overlay versus-history-overlay hidden" id="versusHistoryOverlay">
+                <h2 style="color:#fff;">📋 历史战绩 <span style="font-size:14px;color:#ff5252;font-weight:600;">点开可详细查看</span></h2>
+                <div class="versus-history-list" id="versusHistoryList" style="width:100%;max-height:280px;overflow-y:auto;"></div>
+                <button class="btn btn-ghost" id="versusHistoryBackBtn" style="margin-top:8px;">返回</button>
+            </div>
+
+            <!-- Versus Match Detail Overlay -->
+            <div class="full-overlay versus-detail-overlay hidden" id="versusDetailOverlay">
+                <div id="versusDetailContent" style="width:100%;"></div>
+                <button class="btn btn-ghost" id="versusDetailBackBtn" style="margin-top:8px;">返回</button>
+            </div>
+
+            <!-- Versus Replay Overlay -->
+            <div class="full-overlay versus-replay-overlay hidden" id="versusReplayOverlay">
+                <canvas id="replayCanvas" width="504" height="504" style="border-radius:12px;border:1px solid rgba(255,255,255,0.15);"></canvas>
+                <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+                    <button class="btn btn-primary" id="replayPlayBtn">▶ 播放</button>
+                    <div style="display:flex;align-items:center;gap:4px;">
+                        <span style="font-size:10px;color:rgba(255,255,255,0.4);">倍速</span>
+                        <select id="replaySpeed" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:4px 8px;font-size:12px;">
+                            <option value="1">1x</option>
+                            <option value="2">2x</option>
+                            <option value="3">3x</option>
+                            <option value="4">4x</option>
+                            <option value="5">5x</option>
+                            <option value="6">6x</option>
+                            <option value="7">7x</option>
+                            <option value="8">8x</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-ghost" id="replayBackBtn">返回</button>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:16px;flex-shrink:0;">
+            <div class="joystick-zone" id="joystickZone"><div class="joystick-base"></div><div class="joystick-thumb" id="joystickThumb"></div></div>
+
+            <!-- Boost skill button (versus mode only) -->
+            <div class="boost-btn hidden" id="boostBtn">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L4 14h5l-2 8 12-12h-5l3-8z"/>
+                    <circle cx="12" cy="12" r="2" fill="white" stroke="none" opacity="0.6"/>
+                </svg>
+            </div>
+        </div>
+        <div class="hint">🎮 拖动摇杆 · 360° 自由旋转</div>
+    </div>
+
+    <script>
+        (function() {
+            const API_BASE = window.location.origin;
+            async function apiSubmitScore(n,s,d,l){ const r=await fetch(API_BASE+'/api/scores',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player_name:n,score:s,difficulty:d,snake_length:l})}); return r.json(); }
+            async function apiGetLeaderboard(d){ const r=await fetch(API_BASE+'/api/leaderboard/'+d); return r.json(); }
+
+            // Canvas
+            const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
+            const GRID=28,CELL=18,SIZE=GRID*CELL; canvas.width=SIZE;canvas.height=SIZE;
+
+            // Difficulty
+            const DIFFICULTY={ easy:{name:'简单',cssClass:'easy',speedMultiplier:0.5,selfCollision:false,initBodyLength:4}, normal:{name:'一般',cssClass:'normal',speedMultiplier:0.75,selfCollision:true,initBodyLength:4}, hard:{name:'困难',cssClass:'hard',speedMultiplier:1.0,selfCollision:true,initBodyLength:6} };
+            const BASE_SPEED=2.5;
+
+            // Persisted settings
+            const SETTINGS_KEY='snake360_settings';
+            let settings=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
+            function saveSettings(){ localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings)); }
+            if(!settings.snakeColor) settings.snakeColor='green';
+            if(!settings.sensitivity) settings.sensitivity=50;
+            if(!settings.customSpeed) settings.customSpeed=100;
+            if(settings.tailCollision===undefined) settings.tailCollision=true;
+
+            const SNAKE_COLORS={
+                green:{ head:'#4caf50', body:[40,160,60], bodyStroke:[80,190,80], glow:'rgba(80,255,80,0.8)' },
+                blue:{ head:'#42a5f5', body:[30,130,220], bodyStroke:[60,160,240], glow:'rgba(60,180,255,0.8)' },
+                purple:{ head:'#ab47bc', body:[120,50,160], bodyStroke:[150,80,180], glow:'rgba(160,80,220,0.8)' },
+                orange:{ head:'#ff7043', body:[200,90,40], bodyStroke:[230,120,60], glow:'rgba(255,120,60,0.8)' },
+                pink:{ head:'#ec407a', body:[200,50,100], bodyStroke:[230,80,130], glow:'rgba(240,80,140,0.8)' },
+                yellow:{ head:'#fdd835', body:[180,160,30], bodyStroke:[210,190,50], glow:'rgba(250,220,60,0.8)' },
+                cyan:{ head:'#26c6da', body:[30,160,180], bodyStroke:[50,190,210], glow:'rgba(40,210,230,0.8)' },
+                white:{ head:'#e0e0e0', body:[160,160,160], bodyStroke:[190,190,190], glow:'rgba(220,220,220,0.8)' }
+            };
+
+            // Player name
+            const NAME_KEY='snake360_name';
+            const GUEST_COUNTER_KEY='snake360_guest_counter';
+            let playerName=localStorage.getItem(NAME_KEY)||'';
+
+            function generateGuestName(){
+                // Request unique guest name from server
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', '/api/guest-name', false); // synchronous
+                try {
+                    xhr.send();
+                    if (xhr.status === 200) {
+                        const data = JSON.parse(xhr.responseText);
+                        return data.name;
+                    }
+                } catch(e) {}
+                // Fallback: local random
+                return '游客' + (Math.floor(Math.random() * 900) + 100);
+            }
+
+            // Game state
+            let snake=[],beans=[],angle=0,targetAngle=0,speed=BASE_SPEED,baseSpeed=BASE_SPEED;
+            let score=0,gameOver=false,gameStarted=false,frameCount=0,trailPositions=[],joystickActive=false;
+            let currentDifficulty=null, isCustomMode=false, customSpeedMult=1.0, customTailCollision=true;
+            let turnSpeed=0.12; // sensitivity
+            let reviveUsed=false; // track if revive already used in custom mode
+
+            // DOM
+            const scoreEl=document.getElementById('score'),lengthEl=document.getElementById('length'),speedEl=document.getElementById('speed-display'),diffBadge=document.getElementById('diffBadge'),playerNameTag=document.getElementById('playerNameTag'),diffOverlay=document.getElementById('diffOverlay'),nameOverlay=document.getElementById('nameOverlay'),gameOverOverlay=document.getElementById('gameOverOverlay'),finalScoreEl=document.getElementById('finalScore'),finalDiffEl=document.getElementById('finalDiff'),joystickZone=document.getElementById('joystickZone'),joystickThumb=document.getElementById('joystickThumb');
+            const SEGMENT_LENGTH=CELL*1.15,SEGMENT_WIDTH=CELL*0.65;
+            let currentLbTab='easy',currentGoTab='settings';
+
+            // ─── Settings UI ──────────────────────────
+            // Helper to sync settings across both overlays
+            function syncSettingSliders(){
+                // Sensitivity sliders (both overlays)
+                document.querySelectorAll('[id$="SliderInit"], #sensSlider').forEach(el=>{ if(el.id.includes('sens')||el.id==='sensSlider') el.value=settings.sensitivity; });
+                document.querySelectorAll('[id$="FillInit"], #sensFill').forEach(el=>{ if(el.id.includes('sens')||el.id==='sensFill') el.style.width=settings.sensitivity+'%'; });
+                document.querySelectorAll('[id$="ValInit"], #sensVal').forEach(el=>{ if(el.id.includes('sens')||el.id==='sensVal') el.textContent=settings.sensitivity+'%'; });
+                // Custom speed sliders
+                document.querySelectorAll('[id$="SliderInit"], #customSpeedSlider').forEach(el=>{ if(el.id.includes('customSpeed')||el.id==='customSpeedSlider') el.value=settings.customSpeed; });
+                document.querySelectorAll('[id$="FillInit"], #customSpeedFill').forEach(el=>{ if(el.id.includes('customSpeed')||el.id==='customSpeedFill') updateCustomSpeedFill(el, settings.customSpeed); });
+                document.querySelectorAll('[id$="ValInit"], #customSpeedVal').forEach(el=>{ if(el.id.includes('customSpeed')||el.id==='customSpeedVal') el.textContent=(settings.customSpeed/100).toFixed(2)+'x'; });
+                // Color dots
+                document.querySelectorAll('.color-dot').forEach(d=>d.classList.toggle('selected', d.dataset.color===settings.snakeColor));
+                // Tail collision toggle
+                document.querySelectorAll('.toggle-switch').forEach(sw=>sw.classList.toggle('on', settings.tailCollision));
+                // Custom mode description
+                document.querySelectorAll('[id^="customDesc"]').forEach(el=>{
+                    el.textContent='娱乐模式 · 成绩不计入排行榜 · '+(settings.tailCollision?'碰尾巴会失败':'碰尾巴不失败');
+                });
+            }
+
+            function updateCustomSpeedFill(el, v){ el.style.width=((v-50)/(120-50)*100)+'%'; }
+
+            // Wire up all sliders
+            document.querySelectorAll('.slider-input').forEach(sl=>{
+                sl.addEventListener('input',()=>{
+                    const v=parseInt(sl.value);
+                    if(sl.id.includes('sens')){
+                        settings.sensitivity=v; turnSpeed=0.06+(v/100)*0.18;
+                    } else if(sl.id.includes('customSpeed')){
+                        settings.customSpeed=v;
+                    }
+                    saveSettings();
+                    syncSettingSliders();
+                });
+            });
+
+            // Wire up all color dots
+            document.querySelectorAll('.color-dot').forEach(d=>{ d.addEventListener('click',()=>{ settings.snakeColor=d.dataset.color; saveSettings(); syncSettingSliders(); }); });
+
+            // Wire up tail collision toggles
+            document.querySelectorAll('.toggle-switch').forEach(sw=>{
+                sw.addEventListener('click',()=>{
+                    settings.tailCollision=!settings.tailCollision;
+                    saveSettings();
+                    syncSettingSliders();
+                });
+            });
+
+            turnSpeed=0.06+(settings.sensitivity/100)*0.18;
+            syncSettingSliders();
+
+            async function apiRename(oldName, newName) {
+                const r = await fetch(API_BASE+'/api/rename', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old_name:oldName,new_name:newName})});
+                return r.json();
+            }
+
+            // ─── Player Name ──────────────────────────
+            function updatePlayerNameUI(){
+                const renameLink=document.getElementById('renameLink');
+                if(playerName){
+                    playerNameTag.textContent=playerName; playerNameTag.style.display='';
+                    renameLink.style.display='';
+                } else {
+                    playerNameTag.style.display='none';
+                    renameLink.style.display='none';
+                }
+            }
+            function showRename(){
+                // Block rename during active game
+                if(gameStarted && !gameOver) return;
+                if(versusState.active) return;
+                const oldName=playerName||'';
+                document.getElementById('nameInput').value=oldName;
+                document.getElementById('nameInput').dataset.rename='true';
+                document.querySelector('.name-overlay h2').textContent='✏️ 修改名字';
+                document.querySelector('.name-subtitle').textContent='新名字将同步到排行榜';
+                document.getElementById('nameSkipBtn').style.display='none';
+                nameOverlay.classList.remove('hidden');
+                setTimeout(()=>document.getElementById('nameInput').focus(),300);
+            }
+            function showNameInput(isFirstTime){
+                document.getElementById('nameInput').value=playerName||'';
+                delete document.getElementById('nameInput').dataset.rename;
+                document.querySelector('.name-overlay h2').textContent='🎮 输入你的名字';
+                document.querySelector('.name-subtitle').textContent='加入全球排行榜';
+                document.getElementById('nameSkipBtn').style.display=isFirstTime?'':'none';
+                nameOverlay.classList.remove('hidden');
+                setTimeout(()=>document.getElementById('nameInput').focus(),300);
+            }
+            function skipName(){
+                playerName=generateGuestName();
+                localStorage.setItem(NAME_KEY,playerName);
+                updatePlayerNameUI();
+                nameOverlay.classList.add('hidden');
+                if(pendingScore) submitPendingScore();
+                showMainMenu();
+            }
+            function confirmName(){
+                const n=document.getElementById('nameInput').value.trim();
+                if(!n)return;
+                const isRename=document.getElementById('nameInput').dataset.rename==='true';
+                if(isRename&&playerName&&playerName!==n){
+                    apiRename(playerName,n).catch(()=>{});
+                }
+                playerName=n;
+                localStorage.setItem(NAME_KEY,playerName);
+                updatePlayerNameUI();
+                nameOverlay.classList.add('hidden');
+                if(pendingScore) submitPendingScore();
+                loadLeaderboard(currentLbTab);
+                // Notify versus room of name change
+                if(currentRoomCode){
+                    sendWs({ type:'rename', name:playerName });
+                }
+            }
+            let pendingScore=null;
+            function submitPendingScore(){ if(!pendingScore||!playerName)return; const{d,p,l}=pendingScore; pendingScore=null; apiSubmitScore(playerName,p,d,l).then(()=>loadLeaderboard(currentLbTab)).catch(()=>{}); }
+
+            function showMainMenu(){
+                diffOverlay.classList.remove('hidden');
+                nameOverlay.classList.add('hidden');
+                gameOverOverlay.classList.add('hidden');
+                // Restore rename link when back to menu
+                if(playerName) document.getElementById('renameLink').style.display='';
+            }
+
+            // ─── Leaderboard ──────────────────────────
+            function getLbList(){ return document.getElementById('lbList')||document.getElementById('lbListInit'); }
+            function getBothLbLists(){ return [document.getElementById('lbList'),document.getElementById('lbListInit')].filter(Boolean); }
+            function loadLeaderboard(diff){
+                const lists=getBothLbLists(); if(lists.length===0)return;
+                lists.forEach(list=>list.innerHTML='<div class="lb-loading">加载中...</div>');
+                apiGetLeaderboard(diff).then(data=>{ if(!Array.isArray(data)||data.length===0){ lists.forEach(list=>list.innerHTML='<div class="lb-empty">暂无记录</div>'); return; } const html=data.map((r,i)=>{ const rc=i===0?'top1':i===1?'top2':i===2?'top3':'',m=i===0?'🥇':i===1?'🥈':i===2?'🥉':'',isMe=playerName&&r.player_name===playerName; return`<div class="lb-item" style="${isMe?'background:rgba(76,175,80,0.12);':''}"><span class="lb-rank ${rc}">${m||'#'+(i+1)}</span><span class="lb-name" style="${isMe?'color:#66bb6a;':''}">${escHtml(r.player_name)}${isMe?' ⭐':''}</span><span class="lb-score">${r.score}分</span></div>`; }).join(''); lists.forEach(list=>list.innerHTML=html); }).catch(()=>{lists.forEach(list=>list.innerHTML='<div class="lb-empty">网络错误</div>');});
+            }
+            function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+            function switchLbTab(diff){ currentLbTab=diff; document.querySelectorAll('.lb-tab').forEach(t=>{t.classList.remove('active','easy','normal','hard');if(t.dataset.tab===diff)t.classList.add('active',diff);}); loadLeaderboard(diff); }
+
+            // ─── Game Over Tabs ───────────────────────
+            function switchGoTab(panelName, containerId){
+                currentGoTab=panelName;
+                const container=document.getElementById(containerId||'gameOverOverlay');
+                container.querySelectorAll('.go-tab').forEach(t=>t.classList.toggle('active',t.dataset.panel===panelName));
+                // Match panel IDs: both "panelSettings" and "initialPanelSettings"
+                const panelClass=panelName.charAt(0).toUpperCase()+panelName.slice(1);
+                container.querySelectorAll('.go-panel').forEach(p=>{
+                    const match=p.id==='panel'+panelClass||p.id==='initialPanel'+panelClass;
+                    p.classList.toggle('active',match);
+                });
+                if(panelName==='leaderboard') loadLeaderboard(currentLbTab);
+            }
+
+            // ─── Game Flow ────────────────────────────
+            function startRankedGame(diffKey){
+                currentDifficulty=diffKey; isCustomMode=false;
+                const cfg=DIFFICULTY[diffKey];
+                diffBadge.textContent=cfg.name; diffBadge.className='difficulty-badge '+cfg.cssClass; diffBadge.style.display='';
+                document.getElementById('restartBtn').style.display='';
+                diffOverlay.classList.add('hidden'); nameOverlay.classList.add('hidden'); gameOverOverlay.classList.add('hidden');
+                startGame(cfg.speedMultiplier,cfg.selfCollision,cfg.initBodyLength);
+            }
+
+            function startCustomGame(){
+                const csSlider=document.getElementById('customSpeedSlider')||document.getElementById('customSpeedSliderInit');
+                const mult=parseInt(csSlider.value)/100;
+                currentDifficulty=null; isCustomMode=true; customSpeedMult=mult; customTailCollision=settings.tailCollision; reviveUsed=false;
+                diffBadge.textContent='娱乐'; diffBadge.className='difficulty-badge custom'; diffBadge.style.display='';
+                document.getElementById('restartBtn').style.display='';
+                diffOverlay.classList.add('hidden'); nameOverlay.classList.add('hidden'); gameOverOverlay.classList.add('hidden');
+                startGame(mult,customTailCollision,4);
+            }
+
+            function startGame(speedMult,selfCol,bodyLen){
+                initSnake(bodyLen); initBeans();
+                baseSpeed=BASE_SPEED*speedMult; speed=baseSpeed;
+                score=0; gameOver=false; gameStarted=true; updateUI();
+                // Disable rename during game
+                document.getElementById('renameLink').style.display='none';
+            }
+
+            function randomRainbowColor(){
+                const h=Math.random()*360;
+                const s=70+Math.random()*30; // 70-100%
+                const l=40+Math.random()*20; // 40-60%
+                return {h,s,l};
+            }
+
+            function initSnake(bodyCount){ snake=[]; const sx=SIZE/2,sy=SIZE/2,ia=-Math.PI/2; const head={x:sx,y:sy,angle:ia}; if(settings.snakeColor==='rainbow') head.color=randomRainbowColor(); snake.push(head); for(let i=1;i<=bodyCount;i++){ const seg={x:sx-Math.cos(ia)*SEGMENT_LENGTH*i,y:sy-Math.sin(ia)*SEGMENT_LENGTH*i,angle:ia}; if(settings.snakeColor==='rainbow') seg.color=randomRainbowColor(); snake.push(seg); } angle=ia;targetAngle=ia;trailPositions=[]; }
+            function spawnBean(){ const m=1,bx=m+Math.floor(Math.random()*(GRID-2*m)),by=m+Math.floor(Math.random()*(GRID-2*m)),px=bx*CELL+CELL/2,py=by*CELL+CELL/2; for(const seg of snake)if(Math.hypot(seg.x-px,seg.y-py)<CELL*0.8)return spawnBean(); beans.push({x:px,y:py,pulse:Math.random()*Math.PI*2,size:CELL*0.35}); }
+            function initBeans(){beans=[];for(let i=0;i<5;i++)spawnBean();}
+            function checkWallCollision(x,y){const r=SEGMENT_WIDTH*0.6;return x-r<0||x+r>SIZE||y-r<0||y+r>SIZE;}
+            function checkSelfCollision(hx,hy){ if(isCustomMode){ if(!customTailCollision)return false; for(let i=4;i<snake.length;i++)if(Math.hypot(snake[i].x-hx,snake[i].y-hy)<SEGMENT_WIDTH*0.9)return true; return false; } if(!currentDifficulty||!DIFFICULTY[currentDifficulty].selfCollision)return false; for(let i=4;i<snake.length;i++)if(Math.hypot(snake[i].x-hx,snake[i].y-hy)<SEGMENT_WIDTH*0.9)return true; return false; }
+            function checkBeanCollision(hx,hy){for(let i=beans.length-1;i>=0;i--)if(Math.hypot(beans[i].x-hx,beans[i].y-hy)<CELL*0.7){beans.splice(i,1);return true;}return false;}
+            function addSegment(){const last=snake[snake.length-1],prev=snake.length>=2?snake[snake.length-2]:last,d=Math.hypot(last.x-prev.x,last.y-prev.y)||1; const seg={x:last.x-(last.x-prev.x)/d*SEGMENT_LENGTH*0.7,y:last.y-(last.y-prev.y)/d*SEGMENT_LENGTH*0.7,angle:last.angle}; if(settings.snakeColor==='rainbow') seg.color=randomRainbowColor(); snake.push(seg);}
+
+            function updateSnake(){
+                if(gameOver||!gameStarted)return;
+                let ad=targetAngle-angle;while(ad>Math.PI)ad-=2*Math.PI;while(ad<-Math.PI)ad+=2*Math.PI;
+                angle+=ad*turnSpeed;
+                const head=snake[0];head.x+=Math.cos(angle)*speed;head.y+=Math.sin(angle)*speed;head.angle=angle;
+                trailPositions.unshift({x:head.x,y:head.y,angle});
+                const maxTrail=Math.ceil(snake.length*SEGMENT_LENGTH/speed*1.5);if(trailPositions.length>maxTrail)trailPositions.length=maxTrail;
+                for(let i=1;i<snake.length;i++){const seg=snake[i],td=i*SEGMENT_LENGTH*0.95;let dist=0,tx=head.x,ty=head.y,ta=head.angle;for(let j=0;j<trailPositions.length-1;j++){const p0=trailPositions[j],p1=trailPositions[j+1],step=Math.hypot(p0.x-p1.x,p0.y-p1.y);if(dist+step>=td){const t=step>0.001?(td-dist)/step:0;tx=p0.x+(p1.x-p0.x)*t;ty=p0.y+(p1.y-p0.y)*t;ta=p0.angle;break;}dist+=step;tx=p1.x;ty=p1.y;ta=p1.angle;}seg.x+=(tx-seg.x)*0.4;seg.y+=(ty-seg.y)*0.4;let dd=ta-seg.angle;while(dd>Math.PI)dd-=2*Math.PI;while(dd<-Math.PI)dd+=2*Math.PI;seg.angle+=dd*0.35;}
+                if(checkWallCollision(head.x,head.y)||checkSelfCollision(head.x,head.y)){endGame();return;}
+                if(checkBeanCollision(head.x,head.y)){score+=10;addSegment();spawnBean(); const initLen=isCustomMode?4:DIFFICULTY[currentDifficulty].initBodyLength; speed=baseSpeed+(snake.length-initLen-1)*0.05; updateUI();}
+            }
+
+            function endGame(){
+                gameOver=true;gameStarted=false;
+
+                // Custom mode: offer revive on first death
+                if(isCustomMode && !reviveUsed){
+                    reviveUsed=true;
+                    document.getElementById('reviveSubtitle').innerHTML='保留当前分数 <strong>'+score+'</strong> 分和 <strong>'+snake.length+'</strong> 长度重新开始<br>仅限本次死亡，第二次将直接结束';
+                    document.getElementById('reviveOverlay').classList.remove('hidden');
+                    return;
+                }
+
+                finalScoreEl.textContent='得分: '+score;
+                if(isCustomMode) finalDiffEl.textContent='模式: 娱乐 ('+customSpeedMult.toFixed(2)+'x)';
+                else if(currentDifficulty) finalDiffEl.textContent='难度: '+DIFFICULTY[currentDifficulty].name;
+
+                if(score>0&&!isCustomMode){
+                    if(!playerName){ pendingScore={diff:currentDifficulty,pts:score,l:snake.length}; showNameInput(false); }
+                    else apiSubmitScore(playerName,score,currentDifficulty,snake.length).catch(()=>{});
+                }
+                // Go to the relevant tab: ranked for ranked, custom for custom
+                switchGoTab(isCustomMode?'custom':'ranked', 'gameOverOverlay');
+                // Show fail screen first, click anywhere to continue
+                document.getElementById('failOverlay').classList.remove('hidden');
+                // Don't show gameOverOverlay yet — it shows after clicking fail screen
+                gameOverOverlay.classList.add('hidden');
+            }
+
+            function updateUI(){scoreEl.textContent=score;lengthEl.textContent=snake.length;speedEl.textContent=(Math.round((speed/BASE_SPEED)*10)/10)+'x';}
+
+            // ─── Drawing ───────────────────────────────
+            function drawGrid(){ctx.strokeStyle='rgba(255,255,255,0.03)';ctx.lineWidth=0.5;for(let i=0;i<=GRID;i++){const p=i*CELL;ctx.beginPath();ctx.moveTo(p,0);ctx.lineTo(p,SIZE);ctx.stroke();ctx.beginPath();ctx.moveTo(0,p);ctx.lineTo(SIZE,p);ctx.stroke();}}
+            function drawWallGlow(){ctx.strokeStyle='rgba(255,60,60,0.4)';ctx.lineWidth=2;ctx.shadowColor='rgba(255,40,40,0.6)';ctx.shadowBlur=8;ctx.strokeRect(4,4,SIZE-8,SIZE-8);ctx.shadowBlur=0;}
+            function drawEllipse(cx,cy,a,rx,ry,fill,stroke){ctx.save();ctx.translate(cx,cy);ctx.rotate(a);ctx.beginPath();ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2);ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke();}ctx.restore();}
+            function drawSnake(){
+                if(snake.length===0)return;
+                const isRainbow=settings.snakeColor==='rainbow';
+                const sc=SNAKE_COLORS[settings.snakeColor]||SNAKE_COLORS.green;
+
+                // Helper: get color for a segment (rainbow: per-segment; normal: theme-based)
+                function segBodyColor(seg,i){
+                    if(isRainbow && seg.color){
+                        const c=seg.color, l=c.l+(i/snake.length)*15;
+                        return `hsl(${c.h},${c.s}%,${Math.min(80,l)}%)`;
+                    }
+                    const t=i/snake.length,br=0.3+t*0.5;
+                    return `rgb(${sc.body[0]+br*30|0},${sc.body[1]+br*60|0},${sc.body[2]+br*30|0})`;
+                }
+                function segStrokeColor(seg,i){
+                    if(isRainbow && seg.color){
+                        const c=seg.color;
+                        return `hsla(${c.h},${c.s}%,${Math.min(70,c.l+5)}%,0.6)`;
+                    }
+                    const t=i/snake.length,br=0.3+t*0.5;
+                    return `rgba(${sc.bodyStroke[0]+br*30|0},${sc.bodyStroke[1]+br*30|0},${sc.bodyStroke[2]+br*20|0},0.6)`;
+                }
+
+                for(let i=snake.length-1;i>=1;i--){
+                    const seg=snake[i],t=i/snake.length,scl=0.7+t*0.3;
+                    drawEllipse(seg.x,seg.y,seg.angle,SEGMENT_LENGTH*0.45*scl,SEGMENT_WIDTH*0.4*scl,
+                        segBodyColor(seg,i), segStrokeColor(seg,i));
+                }
+
+                // Head
+                const head=snake[0];
+                let headFill, headGlow;
+                if(isRainbow && head.color){
+                    const c=head.color;
+                    headFill=`hsl(${c.h},${c.s}%,${Math.min(70,c.l+15)}%)`;
+                    headGlow=`hsla(${c.h},${c.s}%,${c.l}%,0.6)`;
+                } else {
+                    headFill=sc.head;
+                    headGlow=sc.glow;
+                }
+                ctx.save();ctx.translate(head.x,head.y);ctx.rotate(head.angle);
+                ctx.shadowColor=headGlow;ctx.shadowBlur=15;
+                ctx.beginPath();ctx.ellipse(0,0,SEGMENT_LENGTH*0.55,SEGMENT_WIDTH*0.48,0,0,Math.PI*2);ctx.fillStyle=headFill;ctx.fill();ctx.shadowBlur=0;
+                ctx.beginPath();ctx.ellipse(2,-3,SEGMENT_LENGTH*0.2,SEGMENT_WIDTH*0.18,0,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.35)';ctx.fill();
+                const eox=SEGMENT_LENGTH*0.3,eoy=SEGMENT_WIDTH*0.28;for(const[ex,ey]of[[eox,-eoy],[eox,eoy]]){ctx.beginPath();ctx.arc(ex,ey,4,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.beginPath();ctx.arc(ex+1.5,ey,2,0,Math.PI*2);ctx.fillStyle='#111';ctx.fill();}
+                if(Math.floor(frameCount/20)%2===0){const tx=SEGMENT_LENGTH*0.55;ctx.beginPath();ctx.moveTo(SEGMENT_LENGTH*0.4,0);ctx.lineTo(tx+4,-3);ctx.moveTo(SEGMENT_LENGTH*0.4,0);ctx.lineTo(tx+4,3);ctx.strokeStyle='#ff5252';ctx.lineWidth=1.5;ctx.lineCap='round';ctx.stroke();}
+                ctx.restore();
+            }
+            function drawBeans(){for(const b of beans){const pulse=1+Math.sin(frameCount*0.08+b.pulse)*0.2,r=b.size*pulse;ctx.save();ctx.translate(b.x,b.y);ctx.shadowColor='rgba(255,200,60,0.8)';ctx.shadowBlur=10;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);const g=ctx.createRadialGradient(-r*0.3,-r*0.3,0,0,0,r);g.addColorStop(0,'#ffe082');g.addColorStop(0.5,'#ffb74d');g.addColorStop(1,'#ff8f00');ctx.fillStyle=g;ctx.fill();ctx.shadowBlur=0;ctx.beginPath();ctx.arc(-r*0.25,-r*0.25,r*0.3,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fill();ctx.restore();}}
+            function render(){ctx.clearRect(0,0,SIZE,SIZE);ctx.fillStyle='#0f0f23';ctx.fillRect(0,0,SIZE,SIZE);drawGrid();drawWallGlow();if(gameStarted){drawBeans();drawSnake();}}
+
+            // ─── Joystick ─────────────────────────────
+            function getJoystickPos(e){const rect=joystickZone.getBoundingClientRect(),cx=rect.left+rect.width/2,cy=rect.top+rect.height/2,maxR=rect.width/2-28,cx2=e.touches?e.touches[0].clientX:e.clientX,cy2=e.touches?e.touches[0].clientY:e.clientY;let dx=cx2-cx,dy=cy2-cy;const dist=Math.hypot(dx,dy);if(dist>maxR){dx=(dx/dist)*maxR;dy=(dy/dist)*maxR;}return{dx,dy};}
+            function updateJoystick(e){const pos=getJoystickPos(e);joystickThumb.style.transform=`translate(${pos.dx}px,${pos.dy}px)`;if(Math.abs(pos.dx)>3||Math.abs(pos.dy)>3){targetAngle=Math.atan2(pos.dy,pos.dx); if(versusState.active) maybeSendVersusInput(targetAngle);}}
+            function resetJoystick(){joystickThumb.style.transform='translate(0px,0px)';joystickActive=false;}
+
+            // ─── Events ───────────────────────────────
+            // Ranked diff buttons (both overlays)
+            document.querySelectorAll('.ranked-diff-btn').forEach(btn=>{const h=e=>{e.preventDefault();e.stopPropagation();startRankedGame(btn.dataset.diff);};btn.addEventListener('touchstart',h,{passive:false});btn.addEventListener('click',h);});
+            // Custom start buttons (both overlays)
+            document.querySelectorAll('.custom-start-btn').forEach(btn=>{btn.addEventListener('click',startCustomGame);});
+            // Name confirm + rename link + skip
+            document.getElementById('nameConfirmBtn').addEventListener('click',confirmName);
+            document.getElementById('nameSkipBtn').addEventListener('click',skipName);
+            document.getElementById('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter')confirmName();});
+            document.getElementById('renameLink').addEventListener('click',showRename);
+            // Game over tabs — handle clicks within each overlay independently
+            document.querySelectorAll('.go-tab').forEach(t=>{t.addEventListener('click',function(){ const overlay=this.closest('.full-overlay'); switchGoTab(this.dataset.panel, overlay.id); });});
+            // Leaderboard sub-tabs
+            document.querySelectorAll('.lb-tab').forEach(t=>{t.addEventListener('click',()=>switchLbTab(t.dataset.tab));});
+            // Restart
+            document.getElementById('restartBtn').addEventListener('click',()=>{ if(!currentDifficulty&&!isCustomMode)return; gameOverOverlay.classList.add('hidden'); reviveUsed=false; if(isCustomMode) startGame(customSpeedMult,customTailCollision,4); else startGame(DIFFICULTY[currentDifficulty].speedMultiplier,DIFFICULTY[currentDifficulty].selfCollision,DIFFICULTY[currentDifficulty].initBodyLength); });
+
+            // Fail overlay: click anywhere to dismiss and show mode selection
+            document.getElementById('failOverlay').addEventListener('click',()=>{
+                document.getElementById('failOverlay').classList.add('hidden');
+                gameOverOverlay.classList.remove('hidden');
+            });
+
+            // Revive handlers
+            document.getElementById('reviveConfirmBtn').addEventListener('click',()=>{
+                document.getElementById('reviveOverlay').classList.add('hidden');
+                // Keep score AND snake length, just re-init snake body with same length
+                const savedScore=score, savedLength=snake.length;
+                initSnake(Math.max(3,savedLength-1)); initBeans();
+                baseSpeed=BASE_SPEED*customSpeedMult; speed=baseSpeed+(savedLength-4)*0.05;
+                score=savedScore; gameOver=false; gameStarted=true; updateUI();
+            });
+            document.getElementById('reviveRejectBtn').addEventListener('click',()=>{
+                document.getElementById('reviveOverlay').classList.add('hidden');
+                finalScoreEl.textContent='得分: '+score;
+                finalDiffEl.textContent='模式: 娱乐 ('+customSpeedMult.toFixed(2)+'x)';
+                if(score>0&&!isCustomMode){
+                    if(!playerName){ pendingScore={diff:currentDifficulty,pts:score,l:snake.length}; showNameInput(false); }
+                    else apiSubmitScore(playerName,score,currentDifficulty,snake.length).catch(()=>{});
+                }
+                switchGoTab('custom', 'gameOverOverlay');
+                document.getElementById('failOverlay').classList.remove('hidden');
+                gameOverOverlay.classList.add('hidden');
+            });
+
+            // Joystick events
+            joystickZone.addEventListener('touchstart',e=>{if(!gameStarted&&!versusState.active)return;e.preventDefault();joystickActive=true;updateJoystick(e);},{passive:false});
+            joystickZone.addEventListener('mousedown',e=>{if(!gameStarted&&!versusState.active)return;joystickActive=true;updateJoystick(e);});
+            window.addEventListener('touchmove',e=>{if(joystickActive&&(gameStarted||versusState.active)){e.preventDefault();updateJoystick(e);}},{passive:false});
+            window.addEventListener('mousemove',e=>{if(joystickActive&&(gameStarted||versusState.active))updateJoystick(e);});
+            const endJ=()=>resetJoystick();window.addEventListener('mouseup',endJ);window.addEventListener('touchend',endJ);window.addEventListener('touchcancel',endJ);
+
+            // Keyboard
+            window.addEventListener('keydown',e=>{if(!gameStarted){if(e.key==='1')startRankedGame('easy');if(e.key==='2')startRankedGame('normal');if(e.key==='3')startRankedGame('hard');return;}switch(e.key.toLowerCase()){case'w':case'arrowup':targetAngle=-Math.PI/2;break;case's':case'arrowdown':targetAngle=Math.PI/2;break;case'a':case'arrowleft':targetAngle=Math.PI;break;case'd':case'arrowright':targetAngle=0;break;case'r':document.getElementById('restartBtn').click();break;}});
+
+            // ═══════════════════════════════════════════════
+            // ─── Versus (Multiplayer) ──────────────────────
+            // ═══════════════════════════════════════════════
+
+            let ws=null, myPlayerId=null, currentRoomCode=null, currentInviteCode=null;
+            let versusState={ active:false, snakes:[], beans:[], isSpectator:false, gameOver:false };
+
+            const versusRoomOverlay=document.getElementById('versusRoomOverlay');
+            const quickMatchOverlay=document.getElementById('quickMatchOverlay');
+            const versusDeadOverlay=document.getElementById('versusDeadOverlay');
+            const versusGameOverOverlay=document.getElementById('versusGameOverOverlay');
+            const failOverlayEl=document.getElementById('failOverlay');
+
+            // ─── WS connection ──────────────────────────
+            function connectWS(){
+                if(ws && ws.readyState<=1) return ws;
+                const wsUrl=(location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/ws';
+                ws=new WebSocket(wsUrl);
+                ws.onmessage=e=>{ try{ const msg=JSON.parse(e.data); handleWsMsg(msg); }catch(err){} };
+                ws.onclose=()=>{ ws=null; if(currentRoomCode) setTimeout(connectWS,2000); };
+                ws.onerror=()=>{};
+                return ws;
+            }
+
+            function sendWs(msg){
+                const c=connectWS();
+                if(c && c.readyState===1) c.send(JSON.stringify(msg));
+                else if(c) c.onopen=()=>c.send(JSON.stringify(msg));
+            }
+
+            // ─── WS message handler ────────────────────
+            function handleWsMsg(msg){
+                switch(msg.type){
+                    case 'room_created':
+                        myPlayerId=msg.playerId;
+                        currentRoomCode=msg.roomCode;
+                        currentInviteCode=msg.inviteCode||null;
+                        showVersusRoom();
+                        break;
+                    case 'room_joined':
+                        myPlayerId=msg.playerId;
+                        currentRoomCode=msg.roomCode;
+                        showVersusRoom();
+                        break;
+                    case 'room_update':
+                        updateVersusPlayerList(msg.players,msg.hostId);
+                        break;
+                    case 'game_start':
+                        startVersusGame(msg);
+                        break;
+                    case 'game_state':
+                        versusState.snakes=msg.snakes||[];
+                        versusState.beans=msg.beans||[];
+                        // Update header score/length/speed for my snake
+                        const me=msg.snakes&&msg.snakes.find(s=>s.id===myPlayerId);
+                        if(me){
+                            scoreEl.textContent=me.score||0;
+                            lengthEl.textContent=me.segments?me.segments.length:0;
+                            speedEl.textContent='1.4x';
+                        }
+                        break;
+                    case 'you_dead':
+                        showVersusDeadScreen(msg);
+                        break;
+                    case 'player_dead':
+                        showKillNotification(msg);
+                        break;
+                    case 'game_over':
+                        showVersusGameOver(msg);
+                        break;
+                    case 'spectate_confirmed':
+                        versusDeadOverlay.classList.add('hidden');
+                        versusState.isSpectator=true;
+                        break;
+                    case 'exit_confirmed':
+                        versusDeadOverlay.classList.add('hidden');
+                        versusState.active=false;
+                        showVersusRoom();
+                        break;
+                    case 'room_error':
+                        alert(msg.message);
+                        break;
+                    case 'quick_match_waiting':
+                        document.getElementById('quickMatchStatus').textContent='已进入匹配队列，等待对手...';
+                        break;
+                    case 'quick_match_found':
+                        quickMatchOverlay.classList.add('hidden');
+                        showVersusRoom();
+                        break;
+                    case 'quick_match_cancelled':
+                        quickMatchOverlay.classList.add('hidden');
+                        diffOverlay.classList.remove('hidden');
+                        break;
+                }
+            }
+
+            // ─── Room UI ────────────────────────────────
+            function showVersusRoom(){
+                versusState.active=false;
+                diffOverlay.classList.add('hidden');
+                gameOverOverlay.classList.add('hidden');
+                versusGameOverOverlay.classList.add('hidden');
+                versusDeadOverlay.classList.add('hidden');
+                versusRoomOverlay.classList.remove('hidden');
+                // Hide boost button when in room
+                document.getElementById('boostBtn').classList.add('hidden');
+                // Restore rename link in room
+                if(playerName) document.getElementById('renameLink').style.display='';
+            }
+
+            function updateVersusPlayerList(players,hostId){
+                const list=document.getElementById('versusPlayerList');
+                list.innerHTML=players.map(p=>{
+                    const colorMap=SNAKE_COLORS[p.color];
+                    const colorStyle = p.color==='rainbow' ? 'background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);' : (colorMap?`background:${colorMap.head};`:'background:#888;');
+                    return `<div class="versus-player-item">
+                        <div class="vp-left">
+                            <div class="vp-color" style="${colorStyle}"></div>
+                            <span class="vp-name">${escHtml(p.name)}${p.id===myPlayerId?' (你)':''}</span>
+                            ${p.id===hostId?'<span class="vp-host">房主</span>':''}
+                        </div>
+                        <div>${p.id===hostId?'<span class="vp-host">房主</span>':(p.ready?'<span class="vp-ready">✓ 已准备</span>':'<span class="vp-not-ready">未准备</span>')}</div>
+                    </div>`;
+                }).join('');
+
+                // Show/hide start button for host
+                const startBtn=document.getElementById('versusStartBtn');
+                const readyBtn=document.getElementById('versusReadyBtn');
+                const isHost=hostId===myPlayerId;
+                startBtn.classList.toggle('hidden',!isHost);
+                readyBtn.classList.toggle('hidden',false);
+
+                // Count ready non-host players
+                const nonHostPlayers = players.filter(p => p.id !== hostId);
+                const readyCount = nonHostPlayers.filter(p => p.ready).length;
+                const countStr = isHost ? (' (' + readyCount + '/' + nonHostPlayers.length + ')') : '';
+
+                // Update ready button text
+                const me=players.find(p=>p.id===myPlayerId);
+                if(me && !isHost){
+                    readyBtn.textContent=me.ready?'取消准备':'准备';
+                    readyBtn.classList.toggle('active',me.ready);
+                } else if(me && isHost){
+                    readyBtn.textContent='准备' + countStr;
+                }
+            }
+
+            // ─── Room actions ───────────────────────────
+            window.versusCreateRoom=function(){
+                if(!playerName){ showNameInput(false); return; }
+                sendWs({ type:'create_room', name:playerName, color:settings.snakeColor });
+            };
+
+            // Quick match
+            window.quickMatch=function(){
+                if(!playerName){ showNameInput(false); return; }
+                sendWs({ type:'quick_match', name:playerName, color:settings.snakeColor });
+                quickMatchOverlay.classList.remove('hidden');
+                diffOverlay.classList.add('hidden');
+            };
+
+            window.cancelQuickMatch=function(){
+                sendWs({ type:'cancel_quick_match' });
+                quickMatchOverlay.classList.add('hidden');
+                diffOverlay.classList.remove('hidden');
+            };
+
+            document.getElementById('cancelQuickMatchBtn').addEventListener('click',()=>{
+                window.cancelQuickMatch();
+            });
+
+            // Invite create: generate invite link, share directly without creating room first
+            // The first person to click the link will auto-create the room
+            window.versusInviteCreate=function(){
+                if(!playerName){ showNameInput(false); return; }
+                // Generate a unique invite code client-side (8 random chars)
+                const chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+                let inviteCode='';
+                for(let i=0;i<8;i++) inviteCode+=chars[Math.floor(Math.random()*chars.length)];
+                const link=location.origin+location.pathname+'?invite='+inviteCode;
+                // Try system share first
+                if(navigator.share){
+                    navigator.share({
+                        title:'🐍 贪吃蛇对战',
+                        text:'快来和我一起玩贪吃蛇对战！点击链接加入',
+                        url:link
+                    }).catch(()=>{});
+                }else{
+                    // Fallback: copy link
+                    navigator.clipboard.writeText(link).then(()=>{
+                        alert('链接已复制！粘贴到微信发送给好友，好友点击链接即可加入你的房间');
+                    }).catch(()=>{
+                        const ta=document.createElement('textarea');
+                        ta.value=link;ta.style.position='fixed';ta.style.opacity='0';
+                        document.body.appendChild(ta);ta.select();
+                        document.execCommand('copy');document.body.removeChild(ta);
+                        alert('链接已复制！粘贴到微信发送给好友，好友点击链接即可加入你的房间');
+                    });
+                }
+            };
+
+            window.versusJoinRoom=function(suffix){
+                const inputId=suffix==='init'?'joinRoomInputInit':'joinRoomInput';
+                const code=(document.getElementById(inputId).value||'').toUpperCase().trim();
+                if(code.length<4){ alert('请输入4位房间号'); return; }
+                if(!playerName){ showNameInput(false); return; }
+                sendWs({ type:'join_room', roomCode:code, name:playerName, color:settings.snakeColor });
+            };
+
+            document.getElementById('versusReadyBtn').addEventListener('click',()=>{
+                const readyBtn=document.getElementById('versusReadyBtn');
+                const isReady=readyBtn.classList.contains('active');
+                sendWs({ type:'ready', ready:!isReady });
+            });
+
+            // Versus init length slider
+            let versusInitLen=6;
+            const vilSlider=document.getElementById('versusInitLenSlider');
+            vilSlider.addEventListener('input',()=>{
+                versusInitLen=parseInt(vilSlider.value);
+                document.getElementById('versusInitLenVal').textContent=versusInitLen;
+                document.getElementById('versusInitLenFill').style.width=((versusInitLen-2)/(10-2)*100)+'%';
+            });
+
+            document.getElementById('versusStartBtn').addEventListener('click',()=>{
+                sendWs({ type:'start_game', initLen:versusInitLen });
+            });
+
+            document.getElementById('versusLeaveBtn').addEventListener('click',()=>{
+                sendWs({ type:'leave_room' });
+                currentRoomCode=null;
+                currentInviteCode=null;
+                versusRoomOverlay.classList.add('hidden');
+                diffOverlay.classList.remove('hidden');
+            });
+
+            // ─── Game start ─────────────────────────────
+            function startVersusGame(msg){
+                versusRoomOverlay.classList.add('hidden');
+                versusDeadOverlay.classList.add('hidden');
+                versusGameOverOverlay.classList.add('hidden');
+                versusState.active=true;
+                versusState.isSpectator=false;
+                versusState.gameOver=false;
+                versusState.snakes=[];
+                versusState.beans=[];
+                document.getElementById('restartBtn').style.display='none';
+                diffBadge.textContent='对战'; diffBadge.className='difficulty-badge custom'; diffBadge.style.display='';
+                // Disable rename during versus game
+                document.getElementById('renameLink').style.display='none';
+                // Show boost button
+                document.getElementById('boostBtn').classList.remove('hidden');
+                startRecording(); // begin recording frames
+            }
+
+            // ─── Kill notification ──────────────────────
+            let killNotifyTimeout=null;
+            function showKillNotification(msg){
+                const el=document.getElementById('killNotify');
+                if(msg.killerName){
+                    el.innerHTML=`<span style="color:#ff5252;font-weight:700;">${escHtml(msg.killerName)}</span> 击杀了 <span style="color:#ffd740;font-weight:700;">${escHtml(msg.playerName)}</span>`;
+                } else {
+                    el.innerHTML=`<span style="color:#ffd740;font-weight:700;">${escHtml(msg.playerName)}</span> 撞墙身亡`;
+                }
+                el.classList.remove('hidden');
+                el.classList.add('show');
+                if(killNotifyTimeout) clearTimeout(killNotifyTimeout);
+                killNotifyTimeout=setTimeout(()=>{
+                    el.classList.remove('show');
+                    setTimeout(()=>el.classList.add('hidden'),300);
+                },2500);
+            }
+
+            // ─── Dead screen ────────────────────────────
+            function showVersusDeadScreen(msg){
+                document.getElementById('deadRanking').textContent=`排名: #${msg.ranking} / ${msg.totalPlayers}`;
+                versusDeadOverlay.classList.remove('hidden');
+            }
+
+            document.getElementById('versusSpectateBtn').addEventListener('click',()=>{
+                sendWs({ type:'spectate' });
+            });
+
+            document.getElementById('versusExitBtn').addEventListener('click',()=>{
+                sendWs({ type:'exit_room' });
+            });
+
+            // ─── Game over ──────────────────────────────
+            function showVersusGameOver(msg){
+                versusState.gameOver=true;
+                versusDeadOverlay.classList.add('hidden');
+                versusState.active=false;
+                // Stop recording and save replay
+                if(msg.matchId) stopRecording(msg.matchId);
+
+                const title=document.getElementById('versusGameOverTitle');
+                const winnerText=document.getElementById('versusWinnerText');
+                if(msg.winner){
+                    if(msg.winner.id===myPlayerId){
+                        title.textContent='🏆 胜利！';
+                        title.style.color='#ffd740';
+                    } else {
+                        title.textContent='游戏结束';
+                        title.style.color='#fff';
+                    }
+                    winnerText.textContent=`冠军: ${msg.winner.name}`;
+                } else {
+                    title.textContent='游戏结束';
+                    title.style.color='#fff';
+                    winnerText.textContent='平局';
+                }
+
+                const list=document.getElementById('versusRankingList');
+                list.innerHTML=msg.ranking.map((r,i)=>{
+                    const isMe=r.id===myPlayerId;
+                    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
+                    const survivalSec=Math.round((r.survivalTicks||0)/30*10)/10;
+                    return `<div class="versus-rank-item ${isMe?'me':''}">
+                        <span>${medal} ${escHtml(r.name)}${isMe?' (你)':''} ${r.alive?'<span style="color:#66bb6a;font-size:10px;">存活</span>':''}</span>
+                        <span style="color:rgba(255,255,255,0.5);">⏱ ${survivalSec}s · ${r.score}分</span>
+                    </div>`;
+                }).join('');
+
+                versusGameOverOverlay.classList.remove('hidden');
+            }
+
+            // Click anywhere on versus game over to exit back to room
+            versusGameOverOverlay.addEventListener('click',(e)=>{
+                versusGameOverOverlay.classList.add('hidden');
+                versusState.gameOver=false;
+                // Always return to versus room
+                showVersusRoom();
+            });
+
+            // ─── Auto-join room from URL ────────────────
+            let autoJoiningFromInvite=false;
+            (function autoJoinFromURL(){
+                const params=new URLSearchParams(location.search);
+                const inviteCode=params.get('invite');
+                if(inviteCode && inviteCode.length>=4){
+                    autoJoiningFromInvite=true;
+                    // Hide initial menu immediately, show room overlay right away
+                    diffOverlay.classList.add('hidden');
+                    nameOverlay.classList.add('hidden');
+                    versusRoomOverlay.classList.remove('hidden');
+                    // Auto-generate guest name if no name set
+                    if(!playerName){
+                        playerName=generateGuestName();
+                        localStorage.setItem(NAME_KEY,playerName);
+                        updatePlayerNameUI();
+                    }
+                    // Wait for WebSocket, then auto-join
+                    function tryJoin(){
+                        const c=connectWS();
+                        if(!c || c.readyState!==1){
+                            setTimeout(tryJoin,300);
+                            return;
+                        }
+                        sendWs({ type:'auto_join', inviteCode:inviteCode, name:playerName, color:settings.snakeColor });
+                        if(history.replaceState) history.replaceState(null,'',location.pathname);
+                    }
+                    setTimeout(tryJoin,500);
+                }
+            })();
+
+            // ─── Boost skill (versus mode) ──────────────
+            const BOOST_DURATION=2000;   // 2 seconds active
+            const BOOST_COOLDOWN=5000;   // 5 seconds cooldown
+            const BOOST_MULTIPLIER=2;    // 2x speed
+            let boostActive=false;
+            let boostOnCooldown=false;
+            let boostTimer=null;
+            let boostCooldownTimer=null;
+            let boostCooldownStart=0;
+
+            const boostBtn=document.getElementById('boostBtn');
+
+            function updateBoostCooldownVisual(){
+                if(!boostOnCooldown){
+                    boostBtn.style.background='rgba(100,181,246,0.3)';
+                    boostBtn.style.borderColor='rgba(100,181,246,0.6)';
+                    return;
+                }
+                const elapsed=Date.now()-boostCooldownStart;
+                const ratio=Math.min(elapsed/BOOST_COOLDOWN,1);
+                // Interpolate from gray back to blue
+                const r=Math.round(255*ratio+100*(1-ratio));
+                const g=Math.round(255*ratio+181*(1-ratio));
+                const b=Math.round(255*ratio+246*(1-ratio));
+                const a=0.08+ratio*0.22;
+                const ba=0.15+ratio*0.45;
+                boostBtn.style.background=`rgba(${r},${g},${b},${a})`;
+                boostBtn.style.borderColor=`rgba(${r},${g},${b},${ba})`;
+                if(ratio<1){
+                    requestAnimationFrame(updateBoostCooldownVisual);
+                }
+            }
+
+            function activateBoost(){
+                if(boostOnCooldown||boostActive) return;
+                if(!versusState.active||!versusState.snakes.length) return;
+
+                boostActive=true;
+                boostBtn.style.background='rgba(100,200,255,0.7)';
+                boostBtn.style.borderColor='rgba(150,220,255,0.9)';
+
+                // Send boost to server
+                sendWs({ type:'boost_activate' });
+
+                boostTimer=setTimeout(()=>{
+                    // Boost ended, start cooldown
+                    boostActive=false;
+                    sendWs({ type:'boost_deactivate' });
+                    startBoostCooldown();
+                },BOOST_DURATION);
+            }
+
+            function startBoostCooldown(){
+                boostOnCooldown=true;
+                boostCooldownStart=Date.now();
+                boostBtn.classList.add('on-cooldown');
+                updateBoostCooldownVisual();
+
+                boostCooldownTimer=setTimeout(()=>{
+                    boostOnCooldown=false;
+                    boostBtn.classList.remove('on-cooldown');
+                    boostBtn.style.background='rgba(100,181,246,0.3)';
+                    boostBtn.style.borderColor='rgba(100,181,246,0.6)';
+                },BOOST_COOLDOWN);
+            }
+
+            boostBtn.addEventListener('click',activateBoost);
+            boostBtn.addEventListener('touchend',e=>{e.preventDefault();activateBoost();});
+
+            // ─── Versus rendering ───────────────────────
+            const MAP_SCALE=4, MAP_SIZE=SIZE*MAP_SCALE; // 2016px full map
+
+            function drawBean(b,ox,oy){
+                const r=b.size;
+                ctx.save();ctx.translate(b.x-ox,b.y-oy);
+                ctx.shadowColor='rgba(255,200,60,0.8)';ctx.shadowBlur=10;
+                ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);
+                const g=ctx.createRadialGradient(-r*0.3,-r*0.3,0,0,0,r);
+                g.addColorStop(0,'#ffe082');g.addColorStop(0.5,'#ffb74d');g.addColorStop(1,'#ff8f00');
+                ctx.fillStyle=g;ctx.fill();ctx.shadowBlur=0;
+                ctx.beginPath();ctx.arc(-r*0.25,-r*0.25,r*0.3,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fill();
+                ctx.restore();
+            }
+
+            function drawVersusSnake(snakeData,isMe,ox,oy){
+                const sc=SNAKE_COLORS[snakeData.color]||SNAKE_COLORS.green;
+                const isRainbow=snakeData.color==='rainbow';
+                const segs=snakeData.segments;
+                if(!segs||segs.length===0) return;
+                const alpha=snakeData.alive?1:0.3;
+
+                ctx.globalAlpha=alpha;
+
+                // Body segments (tail to head)
+                for(let i=segs.length-1;i>=1;i--){
+                    const seg=segs[i],t=i/segs.length,scl=0.7+t*0.3;
+                    let fill,stroke;
+                    if(isRainbow&&seg.color){
+                        const c=seg.color,l=Math.min(80,c.l+(i/segs.length)*15);
+                        fill=`hsl(${c.h},${c.s}%,${l}%)`;
+                        stroke=`hsla(${c.h},${c.s}%,${Math.min(70,c.l+5)}%,0.6)`;
+                    } else {
+                        const br=0.3+t*0.5;
+                        fill=`rgb(${sc.body[0]+br*30|0},${sc.body[1]+br*60|0},${sc.body[2]+br*30|0})`;
+                        stroke=`rgba(${sc.bodyStroke[0]+br*30|0},${sc.bodyStroke[1]+br*30|0},${sc.bodyStroke[2]+br*20|0},0.6)`;
+                    }
+                    drawEllipse(seg.x-ox,seg.y-oy,seg.angle,SEGMENT_LENGTH*0.45*scl,SEGMENT_WIDTH*0.4*scl,fill,stroke);
+                }
+
+                // Head
+                const head=segs[0];
+                let headFill,headGlow;
+                if(isRainbow&&head.color){
+                    const c=head.color;
+                    headFill=`hsl(${c.h},${c.s}%,${Math.min(70,c.l+15)}%)`;
+                    headGlow=`hsla(${c.h},${c.s}%,${c.l}%,0.6)`;
+                } else {
+                    headFill=sc.head; headGlow=sc.glow;
+                }
+                const hx=head.x-ox, hy=head.y-oy;
+                ctx.save();ctx.translate(hx,hy);ctx.rotate(head.angle);
+                if(isMe){ ctx.shadowColor=headGlow; ctx.shadowBlur=20; }
+                else { ctx.shadowColor=headGlow; ctx.shadowBlur=10; }
+                ctx.beginPath();ctx.ellipse(0,0,SEGMENT_LENGTH*0.55,SEGMENT_WIDTH*0.48,0,0,Math.PI*2);ctx.fillStyle=headFill;ctx.fill();ctx.shadowBlur=0;
+                ctx.beginPath();ctx.ellipse(2,-3,SEGMENT_LENGTH*0.2,SEGMENT_WIDTH*0.18,0,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.35)';ctx.fill();
+                const eox=SEGMENT_LENGTH*0.3,eoy=SEGMENT_WIDTH*0.28;
+                for(const[ex,ey]of[[eox,-eoy],[eox,eoy]]){ctx.beginPath();ctx.arc(ex,ey,4,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.beginPath();ctx.arc(ex+1.5,ey,2,0,Math.PI*2);ctx.fillStyle='#111';ctx.fill();}
+                ctx.restore();
+
+                // Name tag
+                ctx.globalAlpha=1;
+                ctx.fillStyle=isMe?'#fff':'rgba(255,255,255,0.7)';
+                ctx.font=isMe?'bold 11px sans-serif':'11px sans-serif';
+                ctx.textAlign='center';
+                ctx.fillText(snakeData.name+(isMe?' (你)':''), hx, hy-18);
+                ctx.globalAlpha=1;
+            }
+
+            // Draw arrow pointing towards off-screen enemy
+            function drawEnemyArrow(fromX,fromY,toX,toY,color){
+                const angle=Math.atan2(toY-fromY,toX-fromX);
+                // Clamp arrow position to edge of screen with margin
+                const margin=30;
+                const cx=SIZE/2, cy=SIZE/2;
+                let ax=cx+Math.cos(angle)*9999, ay=cy+Math.sin(angle)*9999;
+                // Clamp to screen bounds
+                const halfW=SIZE/2-margin, halfH=SIZE/2-margin;
+                const dx=Math.cos(angle), dy=Math.sin(angle);
+                const tx=dx>0? halfW/dx : -halfW/(-dx);
+                const ty=dy>0? halfH/dy : -halfH/(-dy);
+                const t=Math.min(Math.abs(tx),Math.abs(ty));
+                ax=cx+dx*t; ay=cy+dy*t;
+
+                ctx.save();ctx.translate(ax,ay);ctx.rotate(angle);
+                ctx.fillStyle=color;
+                ctx.shadowColor=color; ctx.shadowBlur=8;
+                ctx.beginPath();
+                ctx.moveTo(10,0);ctx.lineTo(-6,-7);ctx.lineTo(-3,0);ctx.lineTo(-6,7);
+                ctx.closePath();ctx.fill();
+                ctx.shadowBlur=0;
+                ctx.restore();
+            }
+
+            function renderVersus(){
+                ctx.clearRect(0,0,SIZE,SIZE);
+                ctx.fillStyle='#0f0f23';
+                ctx.fillRect(0,0,SIZE,SIZE);
+
+                // Find my snake to center viewport
+                const mySnake=versusState.snakes.find(s=>s.id===myPlayerId);
+                let camX=0, camY=0;
+                if(mySnake && mySnake.segments && mySnake.segments.length>0){
+                    camX=mySnake.segments[0].x - SIZE/2;
+                    camY=mySnake.segments[0].y - SIZE/2;
+                }
+                // Clamp camera to map bounds
+                camX=Math.max(0,Math.min(camX, MAP_SIZE-SIZE));
+                camY=Math.max(0,Math.min(camY, MAP_SIZE-SIZE));
+                // If spectator with no snake, center on map
+                if(!mySnake || !mySnake.segments || mySnake.segments.length===0){
+                    // Follow first alive snake
+                    const firstAlive=versusState.snakes.find(s=>s.alive && s.segments && s.segments.length>0);
+                    if(firstAlive){
+                        camX=firstAlive.segments[0].x - SIZE/2;
+                        camY=firstAlive.segments[0].y - SIZE/2;
+                        camX=Math.max(0,Math.min(camX, MAP_SIZE-SIZE));
+                        camY=Math.max(0,Math.min(camY, MAP_SIZE-SIZE));
+                    }
+                }
+
+                // Draw grid (viewport-relative)
+                ctx.strokeStyle='rgba(255,255,255,0.03)';ctx.lineWidth=0.5;
+                const gridOffsetX=camX%CELL, gridOffsetY=camY%CELL;
+                for(let i=0;i<=GRID;i++){
+                    const p=i*CELL-gridOffsetX;
+                    if(p<0||p>SIZE)continue;
+                    ctx.beginPath();ctx.moveTo(p,0);ctx.lineTo(p,SIZE);ctx.stroke();
+                }
+                for(let i=0;i<=GRID;i++){
+                    const p=i*CELL-gridOffsetY;
+                    if(p<0||p>SIZE)continue;
+                    ctx.beginPath();ctx.moveTo(0,p);ctx.lineTo(SIZE,p);ctx.stroke();
+                }
+
+                // Draw wall glow at map edges (viewport-relative)
+                const wallL=-camX, wallT=-camY, wallR=MAP_SIZE-camX, wallB=MAP_SIZE-camY;
+                ctx.strokeStyle='rgba(255,60,60,0.4)';ctx.lineWidth=2;
+                ctx.shadowColor='rgba(255,40,40,0.6)';ctx.shadowBlur=8;
+                if(wallL>=0&&wallL<=SIZE){ctx.beginPath();ctx.moveTo(wallL,0);ctx.lineTo(wallL,SIZE);ctx.stroke();}
+                if(wallR>=0&&wallR<=SIZE){ctx.beginPath();ctx.moveTo(wallR,0);ctx.lineTo(wallR,SIZE);ctx.stroke();}
+                if(wallT>=0&&wallT<=SIZE){ctx.beginPath();ctx.moveTo(0,wallT);ctx.lineTo(SIZE,wallT);ctx.stroke();}
+                if(wallB>=0&&wallB<=SIZE){ctx.beginPath();ctx.moveTo(0,wallB);ctx.lineTo(SIZE,wallB);ctx.stroke();}
+                ctx.shadowBlur=0;
+
+                // Beans (only draw visible ones)
+                for(const b of versusState.beans){
+                    const bx=b.x-camX, by=b.y-camY;
+                    if(bx>-CELL&&bx<SIZE+CELL&&by>-CELL&&by<SIZE+CELL) drawBean(b,camX,camY);
+                }
+
+                // Snakes: others first, then me (on top) — only draw visible
+                const others=versusState.snakes.filter(s=>s.id!==myPlayerId);
+                for(const sd of others){
+                    if(!sd.segments||sd.segments.length===0) continue;
+                    const h=sd.segments[0];
+                    // Check if any segment is visible
+                    let visible=false;
+                    for(const seg of sd.segments){
+                        if(seg.x-camX>-SEGMENT_LENGTH*2&&seg.x-camX<SIZE+SEGMENT_LENGTH*2&&seg.y-camY>-SEGMENT_LENGTH*2&&seg.y-camY<SIZE+SEGMENT_LENGTH*2){visible=true;break;}
+                    }
+                    if(visible) drawVersusSnake(sd,false,camX,camY);
+                }
+                if(mySnake) drawVersusSnake(mySnake,true,camX,camY);
+
+                // Draw enemy arrows for off-screen enemies
+                const arrowColors=['#ff5252','#4fc3f7','#ffd740','#ab47bc','#66bb6a','#ff8f00','#26c6da','#ec407a'];
+                if(mySnake && mySnake.segments && mySnake.segments.length>0){
+                    const myHead=mySnake.segments[0];
+                    let arrowIdx=0;
+                    for(const sd of others){
+                        if(!sd.alive||!sd.segments||sd.segments.length===0) continue;
+                        const eh=sd.segments[0];
+                        // Check if enemy is off-screen
+                        const ex=eh.x-camX, ey=eh.y-camY;
+                        if(ex<0||ex>SIZE||ey<0||ey>SIZE){
+                            const color=arrowColors[arrowIdx%arrowColors.length];
+                            drawEnemyArrow(SIZE/2,SIZE/2,ex,ey,color);
+                            arrowIdx++;
+                        }
+                    }
+                }
+
+                // Spectator badge
+                if(versusState.isSpectator){
+                    ctx.fillStyle='rgba(255,152,0,0.8)';
+                    ctx.font='bold 12px sans-serif';
+                    ctx.textAlign='center';
+                    ctx.fillText('👁 观战中', SIZE/2, 16);
+                }
+
+                // Minimap (top-right corner)
+                drawMinimap(camX,camY);
+            }
+
+            function drawMinimap(camX,camY){
+                const mmSize=70, mmX=SIZE-mmSize-6, mmY=6;
+                const scale=mmSize/MAP_SIZE;
+                // Background
+                ctx.fillStyle='rgba(0,0,0,0.5)';
+                ctx.fillRect(mmX,mmY,mmSize,mmSize);
+                ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=1;
+                ctx.strokeRect(mmX,mmY,mmSize,mmSize);
+                // Viewport rect
+                ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=1;
+                ctx.strokeRect(mmX+camX*scale,mmY+camY*scale,SIZE*scale,SIZE*scale);
+                // Snakes as dots
+                for(const sd of versusState.snakes){
+                    if(!sd.segments||sd.segments.length===0) continue;
+                    const h=sd.segments[0];
+                    const px=mmX+h.x*scale, py=mmY+h.y*scale;
+                    const sc=SNAKE_COLORS[sd.color];
+                    ctx.fillStyle=sd.alive?(sc?sc.head:'#888'):'rgba(100,100,100,0.4)';
+                    ctx.beginPath();ctx.arc(px,py,sd.id===myPlayerId?2.5:1.5,0,Math.PI*2);ctx.fill();
+                }
+            }
+
+            // ─── Versus input ───────────────────────────
+            let lastSentAngle=null, lastSendTime=0;
+            function maybeSendVersusInput(angle){
+                if(!versusState.active) return;
+                const now=Date.now();
+                const changed=lastSentAngle===null||Math.abs(angle-lastSentAngle)>0.05;
+                if(changed||now-lastSendTime>50){
+                    sendWs({ type:'input', angle:angle });
+                    lastSentAngle=angle; lastSendTime=now;
+                }
+            }
+
+            // ─── Match recording & history ─────────────
+            let versusFrames=[]; // recorded frames for replay
+            let versusRecordTimer=null;
+            let currentMatchId=null;
+            const REPLAY_KEY='snake360_replays';
+            const MAX_REPLAY_FRAMES=180; // 3 min at 1fps
+
+            function getReplays(){
+                try{ return JSON.parse(localStorage.getItem(REPLAY_KEY)||'[]'); }catch{ return []; }
+            }
+            function saveReplays(arr){
+                // Keep only last 10 replays to avoid localStorage overflow
+                if(arr.length>5) arr=arr.slice(-5);
+                try{ localStorage.setItem(REPLAY_KEY,JSON.stringify(arr)); }catch(e){
+                    // If too large, remove oldest and retry
+                    arr=arr.slice(-3);
+                    try{ localStorage.setItem(REPLAY_KEY,JSON.stringify(arr)); }catch{}
+                }
+            }
+
+            function startRecording(){
+                versusFrames=[];
+                if(versusRecordTimer) clearInterval(versusRecordTimer);
+                versusRecordTimer=setInterval(()=>{
+                    if(!versusState.active) return;
+                    try{
+                        const frame=canvas.toDataURL('image/jpeg',0.3);
+                        versusFrames.push(frame);
+                        if(versusFrames.length>MAX_REPLAY_FRAMES) versusFrames.shift();
+                    }catch{}
+                },1000); // 1 frame per second
+            }
+
+            function stopRecording(matchId){
+                if(versusRecordTimer){ clearInterval(versusRecordTimer); versusRecordTimer=null; }
+                if(matchId && versusFrames.length>0){
+                    const replays=getReplays();
+                    replays.push({ matchId, frames:versusFrames, timestamp:Date.now() });
+                    saveReplays(replays);
+                }
+                versusFrames=[];
+            }
+
+            // ─── History UI ────────────────────────────
+            const versusHistoryOverlay=document.getElementById('versusHistoryOverlay');
+            const versusDetailOverlay=document.getElementById('versusDetailOverlay');
+            const versusReplayOverlay=document.getElementById('versusReplayOverlay');
+
+            async function loadVersusHistory(){
+                const list=document.getElementById('versusHistoryList');
+                list.innerHTML='<div style="color:rgba(255,255,255,0.4);text-align:center;">加载中...</div>';
+                try{
+                    const r=await fetch(API_BASE+'/api/matches?player='+encodeURIComponent(playerName));
+                    const matches=await r.json();
+                    if(!matches||matches.length===0){
+                        list.innerHTML='<div style="color:rgba(255,255,255,0.4);text-align:center;">暂无对战记录</div>';
+                        return;
+                    }
+                    list.innerHTML=matches.map(m=>{
+                        const rankText=m.myRank?`#${m.myRank}`:'-';
+                        const date=new Date(m.timestamp);
+                        const timeStr=(date.getMonth()+1)+'/'+date.getDate()+' '+String(date.getHours()).padStart(2,'0')+':'+String(date.getMinutes()).padStart(2,'0');
+                        return `<div class="history-item" onclick="showMatchDetail('${m.matchId}')">
+                            <div class="hi-left">
+                                <span class="hi-rank">排名 ${rankText}</span>
+                                <span class="hi-time">${timeStr} · ${m.playerCount}人</span>
+                            </div>
+                            <span class="hi-duration">⏱ ${m.durationSec}s</span>
+                        </div>`;
+                    }).join('');
+                }catch(e){
+                    list.innerHTML='<div style="color:rgba(255,255,255,0.4);text-align:center;">加载失败</div>';
+                }
+            }
+
+            async function showMatchDetail(matchId){
+                try{
+                    const r=await fetch(API_BASE+'/api/matches?player='+encodeURIComponent(playerName));
+                    const matches=await r.json();
+                    const m=matches.find(x=>x.matchId===matchId);
+                    if(!m) return;
+
+                    const content=document.getElementById('versusDetailContent');
+                    const myRank=m.ranking.find(r=>r.name===playerName);
+                    const date=new Date(m.timestamp);
+                    const timeStr=date.toLocaleString('zh-CN');
+
+                    // Check if replay is available locally
+                    const replays=getReplays();
+                    const hasReplay=replays.some(rp=>rp.matchId===matchId);
+
+                    content.innerHTML=`
+                        <div class="history-detail-section">
+                            <h3>📊 对局信息</h3>
+                            <div class="history-player-row"><span>时间</span><span>${timeStr}</span></div>
+                            <div class="history-player-row"><span>时长</span><span>${m.durationSec}秒</span></div>
+                            <div class="history-player-row"><span>人数</span><span>${m.playerCount}人</span></div>
+                            <div class="history-player-row"><span>你的排名</span><span style="color:#ffd740;font-weight:700;">${myRank?'#'+myRank.rank:'未参与'}</span></div>
+                        </div>
+                        <div class="history-detail-section">
+                            <h3>👥 参与玩家</h3>
+                            ${m.players.map(p=>{
+                                const sc=SNAKE_COLORS[p.color];
+                                const colorStyle=p.color==='rainbow'?'background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);':(sc?`background:${sc.head};`:'background:#888;');
+                                return `<div class="history-player-row">
+                                    <span style="display:flex;align-items:center;gap:6px;"><div class="hp-color" style="${colorStyle}"></div>${escHtml(p.name)}</span>
+                                    <span>排名 #${p.rank} · ${p.score}分</span>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                        ${hasReplay?`
+                            <button class="btn btn-primary detail-btn" onclick="playReplay('${matchId}')">▶ 查看录屏回放</button>
+                        `:''}
+                        <button class="btn btn-danger detail-btn" onclick="deleteMatch('${matchId}')">🗑 删除战绩</button>
+                    `;
+                    versusDetailOverlay.classList.remove('hidden');
+                }catch(e){
+                    alert('加载详情失败');
+                }
+            }
+
+            window.showMatchDetail=showMatchDetail;
+
+            function playReplay(matchId){
+                const replays=getReplays();
+                const rp=replays.find(r=>r.matchId===matchId);
+                if(!rp) return;
+                versusDetailOverlay.classList.add('hidden');
+                versusReplayOverlay.classList.remove('hidden');
+
+                const rc=document.getElementById('replayCanvas');
+                const rctx=rc.getContext('2d');
+                const speedSel=document.getElementById('replaySpeed');
+                speedSel.value='1'; // reset to 1x
+                let frameIdx=0;
+                let playing=false;
+                let replayTimer=null;
+
+                function getInterval(){
+                    const speed=parseInt(speedSel.value)||1;
+                    return 1000/speed;
+                }
+
+                function drawFrame(){
+                    if(frameIdx>=rp.frames.length){
+                        playing=false;
+                        clearInterval(replayTimer);
+                        document.getElementById('replayPlayBtn').textContent='▶ 重播';
+                        return;
+                    }
+                    const img=new Image();
+                    img.onload=()=>{
+                        rctx.clearRect(0,0,rc.width,rc.height);
+                        rctx.drawImage(img,0,0,rc.width,rc.height);
+                    };
+                    img.src=rp.frames[frameIdx];
+                    frameIdx++;
+                }
+
+                function togglePlay(){
+                    if(playing){
+                        playing=false;
+                        clearInterval(replayTimer);
+                        document.getElementById('replayPlayBtn').textContent='▶ 继续';
+                    } else {
+                        playing=true;
+                        if(frameIdx>=rp.frames.length) frameIdx=0;
+                        drawFrame();
+                        replayTimer=setInterval(drawFrame,getInterval());
+                        document.getElementById('replayPlayBtn').textContent='⏸ 暂停';
+                    }
+                }
+
+                // Speed change handler — restart interval with new speed
+                speedSel.onchange=()=>{
+                    if(playing){
+                        clearInterval(replayTimer);
+                        replayTimer=setInterval(drawFrame,getInterval());
+                    }
+                };
+
+                document.getElementById('replayPlayBtn').onclick=togglePlay;
+                document.getElementById('replayBackBtn').onclick=()=>{
+                    if(replayTimer) clearInterval(replayTimer);
+                    versusReplayOverlay.classList.add('hidden');
+                    versusDetailOverlay.classList.remove('hidden');
+                };
+
+                // Auto-start
+                frameIdx=0;
+                togglePlay();
+            }
+
+            window.playReplay=playReplay;
+
+            async function deleteMatch(matchId){
+                // Delete from server
+                try{ await fetch(API_BASE+'/api/matches/'+matchId,{method:'DELETE'}); }catch{}
+                // Also delete local replay
+                let replays=getReplays();
+                replays=replays.filter(r=>r.matchId!==matchId);
+                saveReplays(replays);
+                // Go back to history list
+                versusDetailOverlay.classList.add('hidden');
+                versusHistoryOverlay.classList.remove('hidden');
+                loadVersusHistory(); // refresh list
+            }
+
+            window.deleteMatch=deleteMatch;
+
+            // History button events
+            document.getElementById('versusHistoryBtn').addEventListener('click',()=>{
+                versusRoomOverlay.classList.add('hidden');
+                versusHistoryOverlay.classList.remove('hidden');
+                loadVersusHistory();
+            });
+            document.getElementById('versusHistoryBackBtn').addEventListener('click',()=>{
+                versusHistoryOverlay.classList.add('hidden');
+                versusRoomOverlay.classList.remove('hidden');
+            });
+            document.getElementById('versusDetailBackBtn').addEventListener('click',()=>{
+                versusDetailOverlay.classList.add('hidden');
+                versusHistoryOverlay.classList.remove('hidden');
+            });
+
+            // Init — check if player has a name, show name input if not
+            updatePlayerNameUI();
+            updateUI();
+            // Preload leaderboard so it's ready when user opens the tab
+            loadLeaderboard(currentLbTab);
+            if(autoJoiningFromInvite){
+                // Skip — already handled by autoJoinFromURL
+            } else if(!playerName){
+                // First time — show name input first
+                showNameInput(true);
+            } else {
+                showMainMenu();
+            }
+            function gameLoop(){
+                frameCount++;
+                if(versusState.active){
+                    renderVersus();
+                } else {
+                    updateSnake();
+                    render();
+                }
+                requestAnimationFrame(gameLoop);
+            }
+            gameLoop();
+        })();
+    </script>
+</body>
+</html>
