@@ -347,4 +347,2892 @@
                             </div>
                             <div class="versus-section">
                                 <div style="font-size:11px;color:rgba(255,255,255,0.45);font-weight:600;text-align:left;">🌐 公开房间</div>
-                                <div class="room-list-box" id="roomListBoxInit"><d
+                                <div class="room-list-box" id="roomListBoxInit"><div class="room-empty">正在查找房间...</div></div>
+                            </div>
+                            <div class="versus-divider"><span>或</span></div>
+                            <div class="versus-section">
+                                <button class="btn btn-primary versus-btn" onclick="versusCreateRoom()">🏠 创建房间</button>
+                            </div>
+                            <div class="versus-section">
+                                <button class="btn btn-accent versus-btn" onclick="versusInviteCreate()">📋 复制链接邀请好友</button>
+                            </div>
+                            <div class="versus-divider"><span>或</span></div>
+                            <div class="versus-section">
+                                <input type="text" id="joinRoomInputInit" placeholder="输入房间号" maxlength="4" class="versus-input" autocomplete="off">
+                                <button class="btn btn-accent versus-btn" onclick="versusJoinRoom('init')">加入房间</button>
+                            </div>
+                            <div style="color:rgba(255,255,255,0.3);font-size:11px;text-align:center;line-height:1.5;">对战模式 · 邀请好友<br>撞别人尾巴即失败 · 最后存活者胜</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Name Input -->
+            <div class="full-overlay name-overlay hidden" id="nameOverlay">
+                <h2>🎮 输入你的名字</h2>
+                <div class="name-subtitle">加入全球排行榜</div>
+                <input type="text" id="nameInput" placeholder="你的昵称" maxlength="12" autocomplete="off">
+                <div class="name-btns">
+                    <button class="btn btn-primary" id="nameConfirmBtn">确定</button>
+                    <button class="btn btn-ghost" id="nameSkipBtn">暂不命名</button>
+                </div>
+            </div>
+
+            <!-- Revive (Custom mode only, first death) -->
+            <div class="full-overlay revive-overlay hidden" id="reviveOverlay">
+                <h2>💫 是否复活？</h2>
+                <div class="revive-subtitle" id="reviveSubtitle">保留当前分数 <strong>0</strong> 分重新开始<br>仅限本次死亡，第二次将直接结束</div>
+                <div class="revive-btns">
+                    <button class="btn btn-revive" id="reviveConfirmBtn">复活</button>
+                    <button class="btn btn-reject" id="reviveRejectBtn">拒绝</button>
+                </div>
+            </div>
+
+            <!-- Game Over Fail Screen (before mode selection overlay) -->
+            <div class="full-overlay fail-overlay hidden" id="failOverlay">
+                <div class="fail-text">失败</div>
+                <div class="fail-hint">点击任意位置继续</div>
+            </div>
+
+            <!-- Game Over -->
+            <div class="full-overlay gameover-overlay hidden" id="gameOverOverlay">
+                <div class="go-header">
+                    <h2>失败</h2>
+                    <div class="final-score" id="finalScore">得分: 0</div>
+                    <div class="final-diff" id="finalDiff"></div>
+                </div>
+                <div class="go-tabs">
+                    <button class="go-tab active" data-panel="settings">⚙️ 设置</button>
+                    <button class="go-tab" data-panel="leaderboard">🏆 排行榜</button>
+                    <button class="go-tab" data-panel="ranked">🎯 排位</button>
+                    <button class="go-tab" data-panel="custom">🎮 娱乐</button>
+                    <button class="go-tab" data-panel="versus">⚔️ 对战</button>
+                </div>
+                <div class="go-panels">
+                    <!-- Settings Panel -->
+                    <div class="go-panel active" id="panelSettings">
+                        <div class="setting-group">
+                            <div class="setting-label"><span>🐍 贪吃蛇颜色</span></div>
+                            <div class="color-options" id="colorOptions">
+                                <div class="color-dot green selected" data-color="green"></div>
+                                <div class="color-dot blue" data-color="blue"></div>
+                                <div class="color-dot purple" data-color="purple"></div>
+                                <div class="color-dot orange" data-color="orange"></div>
+                                <div class="color-dot pink" data-color="pink"></div>
+                                <div class="color-dot yellow" data-color="yellow"></div>
+                                <div class="color-dot cyan" data-color="cyan"></div>
+                                <div class="color-dot white" data-color="white"></div>
+                                <div class="color-dot rainbow" data-color="rainbow"></div>
+                            </div>
+                        </div>
+                        <div class="setting-group">
+                            <div class="setting-label"><span>🎯 操控灵敏度</span><span class="setting-val" id="sensVal">50%</span></div>
+                            <div class="slider-container">
+                                <div class="slider-track"></div>
+                                <div class="slider-fill" id="sensFill" style="width:50%"></div>
+                                <input type="range" class="slider-input" id="sensSlider" min="10" max="100" value="50" step="1">
+                            </div>
+                            <div class="slider-ticks"><span>慢</span><span>中</span><span>快</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Leaderboard Panel -->
+                    <div class="go-panel" id="panelLeaderboard">
+                        <div class="lb-tabs" id="lbTabs">
+                            <button class="lb-tab easy active" data-tab="easy">简单</button>
+                            <button class="lb-tab normal" data-tab="normal">一般</button>
+                            <button class="lb-tab hard" data-tab="hard">困难</button>
+                        </div>
+                        <div class="lb-list" id="lbList"><div class="lb-loading">加载中...</div></div>
+                    </div>
+
+                    <!-- Ranked Panel -->
+                    <div class="go-panel" id="panelRanked">
+                        <div class="ranked-diff-options">
+                            <button class="ranked-diff-btn easy" data-diff="easy"><span class="rd-icon">🟢</span><span class="rd-info"><span class="rd-name">简单</span><span class="rd-desc">速度减半 · 碰尾巴不失败 · 计入排行榜</span></span></button>
+                            <button class="ranked-diff-btn normal" data-diff="normal"><span class="rd-icon">🟠</span><span class="rd-info"><span class="rd-name">一般</span><span class="rd-desc">速度适中 · 碰尾巴会失败 · 计入排行榜</span></span></button>
+                            <button class="ranked-diff-btn hard" data-diff="hard"><span class="rd-icon">🔴</span><span class="rd-info"><span class="rd-name">困难</span><span class="rd-desc">原始速度 · 更长身体 · 碰尾巴会失败 · 计入排行榜</span></span></button>
+                        </div>
+                    </div>
+
+                    <!-- Custom Panel -->
+                    <div class="go-panel" id="panelCustom">
+                        <div class="setting-group">
+                            <div class="setting-label"><span>⚡ 自定义速度</span><span class="setting-val" id="customSpeedVal">1.0x</span></div>
+                            <div class="slider-container">
+                                <div class="slider-track"></div>
+                                <div class="slider-fill" id="customSpeedFill" style="width:46%"></div>
+                                <input type="range" class="slider-input" id="customSpeedSlider" min="50" max="120" value="100" step="1">
+                            </div>
+                            <div class="slider-ticks"><span>简单(0.5x)</span><span>一般(0.75x)</span><span>困难(1.0x)</span><span>1.2x</span></div>
+                        </div>
+                        <div class="toggle-group" id="tailCollisionToggle">
+                            <span class="toggle-label">💥 碰到尾巴即失败</span>
+                            <div class="toggle-switch on" id="tailSwitch"><div class="track"></div><div class="knob"></div></div>
+                        </div>
+                        <div style="color:rgba(255,255,255,0.35);font-size:11px;text-align:center;margin-top:4px;" id="customDesc">娱乐模式 · 成绩不计入排行榜 · 碰尾巴会失败</div>
+                        <button class="btn btn-accent custom-start-btn" id="customStartBtn">开始游戏</button>
+                    </div>
+                    <div class="go-panel" id="panelVersus">
+                        <div class="versus-menu">
+                            <div class="versus-section">
+                                <button class="btn btn-accent versus-btn" style="font-size:16px;padding:12px 0;background:rgba(255,160,0,0.3);border-color:rgba(255,160,0,0.6);" onclick="quickMatch()">⚡ 快速匹配</button>
+                            </div>
+                            <div class="versus-divider"><span>或</span></div>
+                            <div class="versus-section">
+                                <button class="btn btn-primary versus-btn" onclick="versusCreateRoom()">🏠 创建房间</button>
+                            </div>
+                            <div class="versus-section">
+                                <button class="btn btn-accent versus-btn" onclick="versusInviteCreate()">📋 复制链接邀请好友</button>
+                            </div>
+                            <div class="versus-divider"><span>或</span></div>
+                            <div class="versus-section">
+                                <input type="text" id="joinRoomInput" placeholder="输入房间号" maxlength="4" class="versus-input" autocomplete="off">
+                                <button class="btn btn-accent versus-btn" onclick="versusJoinRoom()">加入房间</button>
+                            </div>
+                            <div style="color:rgba(255,255,255,0.3);font-size:11px;text-align:center;line-height:1.5;">对战模式 · 邀请好友<br>撞别人尾巴即失败 · 最后存活者胜</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 网络状态提示 -->
+            <div class="net-status hidden" id="netStatus"></div>
+
+            <!-- Quick Match Searching Overlay -->
+            <div class="full-overlay quickmatch-overlay hidden" id="quickMatchOverlay" style="z-index:16;">
+                <div style="font-size:48px;animation:spin 1.5s linear infinite;">⚡</div>
+                <h2 style="color:#fff;">正在寻找对手...</h2>
+                <div style="color:rgba(255,255,255,0.5);font-size:13px;" id="quickMatchStatus">已进入匹配队列</div>
+                <button class="btn btn-ghost" id="cancelQuickMatchBtn" style="margin-top:16px;">取消匹配</button>
+            </div>
+
+            <!-- Versus Room Overlay -->
+            <div class="full-overlay versus-room-overlay hidden" id="versusRoomOverlay">
+                <div class="versus-room-header" style="text-align:center;">
+                    <h2 style="color:#fff;">⚔️ 对战房间</h2>
+                    <div id="roomCodeDisplay" style="display:none;margin-top:6px;">
+                        <div style="font-size:10px;color:rgba(255,255,255,0.4);">房间号</div>
+                        <div class="room-code-display" id="roomCodeText" style="margin-top:4px;">----</div>
+                        <button class="btn" id="copyRoomCodeBtn" style="margin-top:6px;font-size:11px;padding:5px 12px;">📋 复制邀请链接</button>
+                    </div>
+                </div>
+                <div class="versus-player-list" id="versusPlayerList"></div>
+                <div class="setting-group" style="width:100%;">
+                    <div class="setting-label"><span>🐍 初始长度</span><span class="setting-val" id="versusInitLenVal" style="color:#ff5252;font-size:20px;font-weight:800;">6</span></div>
+                    <div class="slider-container">
+                        <div class="slider-track"></div>
+                        <div class="slider-fill" id="versusInitLenFill" style="width:50%"></div>
+                        <input type="range" class="slider-input" id="versusInitLenSlider" min="2" max="10" value="6" step="1">
+                    </div>
+                    <div class="slider-ticks"><span>2</span><span>6</span><span>10</span></div>
+                </div>
+                <div class="versus-room-actions">
+                    <button class="btn btn-ready" id="versusReadyBtn">准备</button>
+                    <button class="btn btn-primary hidden" id="versusStartBtn">开始游戏</button>
+                    <button class="btn btn-ghost" id="versusLeaveBtn">离开</button>
+                </div>
+                <button class="btn versus-history-btn" id="versusHistoryBtn" style="margin-top:8px;font-size:12px;">📋 历史战绩</button>
+            </div>
+
+            <!-- Versus Dead Overlay -->
+            <div class="full-overlay versus-dead-overlay hidden" id="versusDeadOverlay">
+                <h2>💀 你被淘汰了</h2>
+                <div class="dead-ranking" id="deadRanking">排名: #--</div>
+                <div class="versus-dead-btns">
+                    <button class="btn btn-primary" id="versusSpectateBtn">👁️ 观战</button>
+                    <button class="btn btn-ghost" id="versusExitBtn">🚪 退出</button>
+                </div>
+            </div>
+
+            <!-- Versus Game Over Overlay -->
+            <div class="full-overlay versus-gameover-overlay hidden" id="versusGameOverOverlay">
+                <h2 id="versusGameOverTitle">游戏结束</h2>
+                <div class="versus-winner" id="versusWinnerText"></div>
+                <div class="versus-ranking-list" id="versusRankingList"></div>
+                <div style="color:rgba(255,255,255,0.3);font-size:11px;margin-top:4px;">点击任意位置继续</div>
+            </div>
+
+            <!-- Versus Match History Overlay -->
+            <div class="full-overlay versus-history-overlay hidden" id="versusHistoryOverlay">
+                <h2 style="color:#fff;">📋 历史战绩 <span style="font-size:14px;color:#ff5252;font-weight:600;">点开可详细查看</span></h2>
+                <div class="versus-history-list" id="versusHistoryList" style="width:100%;max-height:280px;overflow-y:auto;"></div>
+                <button class="btn btn-ghost" id="versusHistoryBackBtn" style="margin-top:8px;">返回</button>
+            </div>
+
+            <!-- Versus Match Detail Overlay -->
+            <div class="full-overlay versus-detail-overlay hidden" id="versusDetailOverlay">
+                <div id="versusDetailContent" style="width:100%;"></div>
+                <button class="btn btn-ghost" id="versusDetailBackBtn" style="margin-top:8px;">返回</button>
+            </div>
+
+            <!-- Versus Replay Overlay -->
+            <div class="full-overlay versus-replay-overlay hidden" id="versusReplayOverlay">
+                <canvas id="replayCanvas" width="504" height="504" style="border-radius:12px;border:1px solid rgba(255,255,255,0.15);"></canvas>
+                <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+                    <button class="btn btn-primary" id="replayPlayBtn">▶ 播放</button>
+                    <div style="display:flex;align-items:center;gap:4px;">
+                        <span style="font-size:10px;color:rgba(255,255,255,0.4);">倍速</span>
+                        <select id="replaySpeed" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:4px 8px;font-size:12px;">
+                            <option value="1">1x</option>
+                            <option value="2">2x</option>
+                            <option value="3">3x</option>
+                            <option value="4">4x</option>
+                            <option value="5">5x</option>
+                            <option value="6">6x</option>
+                            <option value="7">7x</option>
+                            <option value="8">8x</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-ghost" id="replayBackBtn">返回</button>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:16px;flex-shrink:0;">
+            <div class="joystick-zone" id="joystickZone"><div class="joystick-base"></div><div class="joystick-thumb" id="joystickThumb"></div></div>
+
+            <!-- Boost skill button (versus mode only) -->
+            <div class="boost-btn hidden" id="boostBtn">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L4 14h5l-2 8 12-12h-5l3-8z"/>
+                    <circle cx="12" cy="12" r="2" fill="white" stroke="none" opacity="0.6"/>
+                </svg>
+            </div>
+        </div>
+        <div class="hint">🎮 拖动摇杆 · 360° 自由旋转</div>
+    </div>
+
+    <script>
+        (function() {
+
+// ═══════════════════════════════════════════════════════════════
+// 内嵌模块：MiniMQTT + S360Core（各自独立 IIFE，无变量冲突）
+// ═══════════════════════════════════════════════════════════════
+// MiniMQTT - 极简 MQTT 3.1.1 客户端（浏览器/Node 通用）
+// 仅支持 QoS0 发布/订阅 + 保留消息 + 遗嘱(LWT)，足以支撑游戏信令与中继
+(function (global) {
+  'use strict';
+
+  class MiniMQTT {
+    constructor(opts) {
+      this.url = opts.url;                 // wss://host:port/mqtt
+      this.clientId = opts.clientId;
+      this.willTopic = opts.willTopic || null;
+      this.willPayload = opts.willPayload || '';
+      this.keepalive = opts.keepalive || 30;   // 秒
+      this.onConnect = opts.onConnect || function () {};
+      this.onMessage = opts.onMessage || function () {};  // (topic, payloadString)
+      this.onClose = opts.onClose || function () {};
+      this.onState = opts.onState || function () {};      // 'connecting'|'open'|'closed'
+      this.ws = null;
+      this.connected = false;
+      this._pingTimer = null;
+      this._packetId = 1;
+      this._pending = [];     // 待发送（连接建立前缓存）
+      this._subscribed = [];  // 已订阅主题，重连后恢复
+      this._closedByUser = false;
+      this._reconnectDelay = 1000;
+    }
+
+    // ── 工具 ──
+    static _enc(str) { return new TextEncoder().encode(str); }
+    static _remLen(n) {
+      const bytes = [];
+      do {
+        let b = n % 128; n = Math.floor(n / 128);
+        if (n > 0) b |= 0x80;
+        bytes.push(b);
+      } while (n > 0);
+      return bytes;
+    }
+    static _str(bytes) {
+      // bytes: Uint8Array -> len-prefixed string bytes
+      const s = MiniMQTT._enc(bytes);
+      const out = [(s.length >> 8) & 0xFF, s.length & 0xFF];
+      return out.concat(Array.from(s));
+    }
+
+    connect() {
+      this._closedByUser = false;
+      this._rxBuf = new Uint8Array(0); // 接收缓冲区（处理粘包/半包）
+      this.onState('connecting');
+      let ws;
+      try {
+        ws = new WebSocket(this.url, 'mqtt');
+      } catch (e) {
+        ws = new WebSocket(this.url);
+      }
+      ws.binaryType = 'arraybuffer';
+      this.ws = ws;
+
+      ws.onopen = () => {
+        // 发送 CONNECT 包
+        const flags = 0x02 | (this.willTopic ? 0x04 : 0x00);
+        const vh = [].concat(
+          MiniMQTT._str('MQTT'),
+          [0x04, flags, (this.keepalive >> 8) & 0xFF, this.keepalive & 0xFF]
+        );
+        const payload = [].concat(
+          MiniMQTT._str(this.clientId),
+          this.willTopic ? MiniMQTT._str(this.willTopic) : [],
+          this.willTopic ? MiniMQTT._str(this.willPayload) : []
+        );
+        const body = vh.concat(payload);
+        ws.send(new Uint8Array([0x10].concat(MiniMQTT._remLen(body.length), body)));
+      };
+
+      ws.onmessage = (ev) => {
+        const chunk = ev.data instanceof ArrayBuffer ? new Uint8Array(ev.data) : new Uint8Array(ev.data);
+        // 追加到缓冲区（粘包处理）
+        const merged = new Uint8Array(this._rxBuf.length + chunk.length);
+        merged.set(this._rxBuf); merged.set(chunk, this._rxBuf.length);
+        this._rxBuf = merged;
+
+        // 循环解析缓冲区中的所有完整数据包
+        let buf = this._rxBuf;
+        while (true) {
+          if (buf.length < 2) break;
+          // 解析剩余长度 varint
+          let pos = 1, mult = 1, rl = 0, byte, varintBytes = 0, malformed = false;
+          do {
+            if (pos >= buf.length) { malformed = true; break; } // varint 不完整，等待更多数据
+            byte = buf[pos++]; varintBytes++;
+            rl += (byte & 0x7F) * mult;
+            mult *= 128;
+            if (varintBytes > 4) { malformed = true; break; }
+          } while (byte & 0x80);
+          if (malformed) break;
+          const totalLen = 1 + varintBytes + rl;
+          if (buf.length < totalLen) break; // 包不完整，等待更多数据
+
+          const pkt = buf.subarray(0, totalLen);
+          this._handlePacket(pkt, 1 + varintBytes);
+          buf = buf.subarray(totalLen);
+        }
+        this._rxBuf = buf;
+      };
+
+      ws.onclose = () => {
+        const wasConnected = this.connected;
+        this.connected = false;
+        this._stopPing();
+        if (wasConnected) this.onClose();
+        this.onState('closed');
+        if (!this._closedByUser) {
+          // 自动重连
+          setTimeout(() => { if (!this._closedByUser) this.connect(); }, this._reconnectDelay);
+          this._reconnectDelay = Math.min(this._reconnectDelay * 1.5, 8000);
+        }
+      };
+      ws.onerror = () => { /* onclose 会跟随触发 */ };
+    }
+
+    _handlePacket(pkt, headerLen) {
+      const type = pkt[0] >> 4;
+      if (type === 2) {
+        // CONNACK: [type, remlen, sessionPresent, returnCode]
+        const rc = pkt[3];
+        if (rc === 0) {
+          this.connected = true;
+          this._reconnectDelay = 1000;
+          for (const t of this._subscribed) this._sendSubscribe(t);
+          const pend = this._pending; this._pending = [];
+          for (const p of pend) this.publish(p.topic, p.payload, p.retain);
+          this.onState('open');
+          this.onConnect();
+          this._startPing();
+        } else {
+          try { this.ws.close(); } catch (e) {}
+        }
+      } else if (type === 3) {
+        // PUBLISH (QoS0)
+        let pos = headerLen;
+        const topicLen = (pkt[pos] << 8) | pkt[pos + 1];
+        pos += 2;
+        const topic = new TextDecoder().decode(pkt.subarray(pos, pos + topicLen));
+        pos += topicLen;
+        const qos = (pkt[0] >> 1) & 0x03;
+        if (qos > 0) pos += 2; // 包ID
+        const payloadBytes = pkt.subarray(pos);
+        let payloadStr = null;
+        try { payloadStr = new TextDecoder('utf-8', { fatal: false }).decode(payloadBytes); } catch (e) {}
+        try { this.onMessage(topic, payloadBytes, payloadStr); } catch (e) { if (console && console.error) console.error('onMessage error', e); }
+      }
+      // SUBACK(9) / PINGRESP(13) 等无需处理
+    }
+
+    _startPing() {
+      this._stopPing();
+      this._pingTimer = setInterval(() => {
+        if (this.ws && this.ws.readyState === 1) {
+          this.ws.send(new Uint8Array([0xC0, 0x00]));
+        }
+      }, Math.max(5, (this.keepalive - 10)) * 1000);
+    }
+    _stopPing() { if (this._pingTimer) { clearInterval(this._pingTimer); this._pingTimer = null; } }
+
+    _sendSubscribe(topic) {
+      const id = this._packetId++ & 0xFFFF || 1;
+      const body = [].concat(
+        [(id >> 8) & 0xFF, id & 0xFF],
+        MiniMQTT._str(topic), [0x00]
+      );
+      if (this.ws && this.ws.readyState === 1) {
+        this.ws.send(new Uint8Array([0x82].concat(MiniMQTT._remLen(body.length), body)));
+      }
+    }
+
+    subscribe(topic) {
+      if (!this._subscribed.includes(topic)) this._subscribed.push(topic);
+      if (this.connected) this._sendSubscribe(topic);
+    }
+
+    publish(topic, payload, retain) {
+      const isBinary = payload instanceof Uint8Array || payload instanceof ArrayBuffer;
+      const msg = { topic, payload, retain: !!retain };
+      if (!this.connected) {
+        // 未连接：仅保留重要消息（retain 的），避免陈旧状态堆积
+        if (msg.retain && this._pending.length < 20) this._pending.push(msg);
+        return;
+      }
+      let body;
+      if (isBinary) {
+        const bytes = payload instanceof ArrayBuffer ? new Uint8Array(payload) : payload;
+        const topicBytes = MiniMQTT._str(topic);
+        body = new Uint8Array(topicBytes.length + bytes.length);
+        body.set(topicBytes, 0);
+        body.set(bytes, topicBytes.length);
+      } else {
+        body = new Uint8Array(MiniMQTT._str(topic).concat(Array.from(MiniMQTT._enc(String(payload)))));
+      }
+      const header = retain ? 0x31 : 0x30;
+      const out = new Uint8Array(1 + MiniMQTT._remLen(body.length).length + body.length);
+      out[0] = header;
+      const rl = MiniMQTT._remLen(body.length);
+      out.set(rl, 1);
+      out.set(body, 1 + rl.length);
+      this.ws.send(out);
+    }
+
+    destroy() {
+      this._closedByUser = true;
+      this._stopPing();
+      try { if (this.ws) this.ws.close(); } catch (e) {}
+      this.connected = false;
+    }
+  }
+
+  global.MiniMQTT = MiniMQTT;
+})(window.__S360TMP_MQTT__ = {});
+
+// ═══════════════════════════════════════════════════════════════
+// S360Core — 贪吃蛇 v6 静态版核心模块（网络 + 房主模拟 + 编解码 + 机器人）
+// 无 DOM 依赖，浏览器与 Node 均可运行
+// ═══════════════════════════════════════════════════════════════
+(function (global) {
+  'use strict';
+
+  // ── 常量（与游戏本体保持一致）──
+  const GRID = 28, CELL = 18, SIZE = GRID * CELL;          // 504
+  const MAP_SCALE = 4, MAP_SIZE = SIZE * MAP_SCALE;         // 2016
+  const SEGMENT_LENGTH = CELL * 1.15;                       // 20.7
+  const SEGMENT_WIDTH = CELL * 0.65;                        // 11.7
+  const BASE_SPEED = 2.5, VERSUS_SPEED = BASE_SPEED * 1.4;  // 3.5
+  const TURN_SPEED = 0.15;
+  const TICK_MS = 33;             // 30Hz 模拟
+  const STATE_HZ = 8;             // 8Hz 状态广播（经实测公共 broker 安全上限）
+  const BEAN_COUNT = 55;
+  const BEAN_EAT_DIST = CELL * 0.7;
+  const COLLIDE_DIST = SEGMENT_WIDTH * 0.9;
+  const WALL_MARGIN = SEGMENT_WIDTH * 0.6;
+  const MAX_PLAYERS = 8;
+  const BOOST_DURATION = 2000, BOOST_COOLDOWN = 5000, BOOST_MULT = 2;
+  const PALETTE = ['green', 'blue', 'purple', 'orange', 'pink', 'yellow', 'cyan', 'white', 'rainbow'];
+
+  // ── 工具 ──
+  function randStr(n) {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    let s = '';
+    for (let i = 0; i < n; i++) s += chars[Math.floor(Math.random() * chars.length)];
+    return s;
+  }
+  function roomCode4() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let s = '';
+    for (let i = 0; i < 4; i++) s += chars[Math.floor(Math.random() * chars.length)];
+    return s;
+  }
+  function rainbowColor() {
+    return { h: Math.floor(Math.random() * 360), s: 70 + Math.random() * 30, l: 40 + Math.random() * 20 };
+  }
+
+  // ═══ 二进制状态编解码 ═══
+  // 格式: [u8 magic=1][u16 tick][u8 playerCount]
+  //   每玩家: [u8 pidLen][pid bytes][u16 score][u8 flags(bit0=alive)][u16 segCount][i16 x,i16 y]×segCount
+  //   [u8 beanCount][i16 x,i16 y]×beanCount
+  function encodeState(state) {
+    const players = state.players, beans = state.beans;
+    let size = 1 + 2 + 1;
+    for (const p of players) size += 1 + p.pid.length + 2 + 1 + 2 + p.segments.length * 4;
+    size += 1 + beans.length * 4;
+    const buf = new ArrayBuffer(size);
+    const dv = new DataView(buf);
+    const u8 = new Uint8Array(buf);
+    let o = 0;
+    u8[o++] = 1;
+    dv.setUint16(o, state.tick & 0xFFFF, true); o += 2;
+    u8[o++] = players.length;
+    for (const p of players) {
+      const pidBytes = new TextEncoder().encode(p.pid);
+      u8[o++] = pidBytes.length;
+      u8.set(pidBytes, o); o += pidBytes.length;
+      dv.setUint16(o, Math.min(0xFFFF, p.score | 0), true); o += 2;
+      u8[o++] = p.alive ? 1 : 0;
+      dv.setUint16(o, Math.min(0xFFFF, p.segments.length), true); o += 2;
+      for (const seg of p.segments) {
+        dv.setInt16(o, Math.max(-1, Math.round(seg.x)), true); o += 2;
+        dv.setInt16(o, Math.max(-1, Math.round(seg.y)), true); o += 2;
+      }
+    }
+    u8[o++] = beans.length;
+    for (const b of beans) {
+      dv.setInt16(o, Math.max(0, Math.round(b.x)), true); o += 2;
+      dv.setInt16(o, Math.max(0, Math.round(b.y)), true); o += 2;
+    }
+    return buf;
+  }
+
+  function decodeState(buf) {
+    const u8 = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+    const dv = buf instanceof Uint8Array ? new DataView(buf.buffer, buf.byteOffset, buf.byteLength) : new DataView(buf);
+    let o = 0;
+    if (u8[o++] !== 1) return null;
+    const tick = dv.getUint16(o, true); o += 2;
+    const playerCount = u8[o++];
+    const players = [];
+    for (let i = 0; i < playerCount; i++) {
+      const pidLen = u8[o++];
+      const pid = new TextDecoder().decode(u8.subarray(o, o + pidLen)); o += pidLen;
+      const score = dv.getUint16(o, true); o += 2;
+      const alive = (u8[o++] & 1) === 1;
+      const segCount = dv.getUint16(o, true); o += 2;
+      const segments = [];
+      for (let j = 0; j < segCount; j++) {
+        const x = dv.getInt16(o, true); o += 2;
+        const y = dv.getInt16(o, true); o += 2;
+        segments.push({ x, y });
+      }
+      // 角度由相邻段方向推算
+      for (let j = 0; j < segments.length; j++) {
+        if (j === 0 && segments.length > 1) {
+          segments[0].angle = Math.atan2(segments[0].y - segments[1].y, segments[0].x - segments[1].x);
+        } else if (j > 0) {
+          segments[j].angle = Math.atan2(segments[j - 1].y - segments[j].y, segments[j - 1].x - segments[j].x);
+        } else {
+          segments[0].angle = 0;
+        }
+      }
+      players.push({ pid, score, alive, segments });
+    }
+    const beanCount = u8[o++];
+    const beans = [];
+    for (let i = 0; i < beanCount; i++) {
+      beans.push({ x: dv.getInt16(o, true), y: dv.getInt16(o + 2, true) });
+      o += 4;
+    }
+    return { tick, players, beans };
+  }
+
+  // ═══ 房主端游戏模拟器 ═══
+  class HostSim {
+    constructor(callbacks) {
+      this.cb = callbacks || {};             // {onState(bytes), onPlayerMsg(pid, msg), onBroadcast(msg), onGameOver(result)}
+      this.players = new Map();              // pid -> player
+      this.order = [];                       // 加入顺序
+      this.beans = [];
+      this.tick = 0;
+      this.running = false;
+      this.startedAt = 0;
+      this._timer = null;
+      this._lastPublish = 0;
+      this.matchId = null;
+      this.inGame = false;
+    }
+
+    // ── 房间管理 ──
+    addPlayer(info) {
+      if (this.players.size >= MAX_PLAYERS) return { ok: false, error: '房间已满（最多8人）' };
+      if (this.inGame && !info.rejoin) return { ok: false, error: '游戏已开始，请等待本局结束' };
+      const used = new Set([...this.players.values()].map(p => p.color));
+      let color = info.color && !used.has(info.color) ? info.color : PALETTE.find(c => !used.has(c)) || 'green';
+      const existing = this.players.get(info.pid);
+      if (existing) {
+        existing.name = info.name || existing.name;
+        existing.connected = true;
+        return { ok: true, player: existing };
+      }
+      const p = {
+        pid: info.pid, name: info.name || '玩家', color,
+        ready: !!info.ready, bot: !!info.bot, connected: true,
+        alive: false, score: 0, segments: [], angle: 0, targetAngle: 0,
+        boostUntil: 0, boostReadyAt: 0, deathTick: 0, deathOrder: 0, inGame: false,
+      };
+      this.players.set(info.pid, p);
+      this.order.push(info.pid);
+      return { ok: true, player: p };
+    }
+
+    removePlayer(pid) {
+      const p = this.players.get(pid);
+      if (!p) return;
+      if (this.inGame && p.inGame && p.alive) {
+        // 游戏中离开 = 死亡
+        this._kill(p, null, 'left');
+      }
+      this.players.delete(pid);
+      this.order = this.order.filter(id => id !== pid);
+    }
+
+    setReady(pid, ready) {
+      const p = this.players.get(pid);
+      if (p) p.ready = !!ready;
+    }
+
+    renamePlayer(pid, name) {
+      const p = this.players.get(pid);
+      if (p && name) p.name = String(name).slice(0, 12);
+    }
+
+    playerList() {
+      return this.order.map(id => this.players.get(id)).filter(Boolean)
+        .map(p => ({ id: p.pid, name: p.name, color: p.color, ready: p.bot ? true : p.ready }));
+    }
+
+    aliveCount() { let n = 0; for (const p of this.players.values()) if (p.inGame && p.alive) n++; return n; }
+    gamePlayerCount() { let n = 0; for (const p of this.players.values()) if (p.inGame) n++; return n; }
+
+    // ── 游戏开始 ──
+    startGame(initLen, opts) {
+      if (this.inGame) return false;
+      initLen = Math.max(2, Math.min(10, initLen || 6));
+      const noTimer = opts && opts.noTimer; // 测试模式：外部手动调用 _tick()
+      const participants = this.order.map(id => this.players.get(id)).filter(p => p && (p.ready || p.bot));
+      if (participants.length < 1) return false;
+      this.inGame = true;
+      this.tick = 0;
+      this.matchId = 'm' + Date.now().toString(36) + randStr(4);
+      this.startedAt = Date.now();
+      this._deathCounter = 0;
+      this.beans = [];
+      const N = participants.length;
+      participants.forEach((p, i) => {
+        const ang = (i / N) * Math.PI * 2 - Math.PI / 2;
+        const cx = MAP_SIZE / 2, cy = MAP_SIZE / 2;
+        const sx = cx + Math.cos(ang) * 700, sy = cy + Math.sin(ang) * 700;
+        const facing = Math.atan2(cy - sy, cx - sx); // 朝向地图中心
+        p.segments = [];
+        const head = { x: sx, y: sy };
+        if (p.color === 'rainbow') head.color = rainbowColor();
+        p.segments.push(head);
+        for (let j = 1; j < initLen; j++) {
+          const seg = {
+            x: sx - Math.cos(facing) * SEGMENT_LENGTH * j,
+            y: sy - Math.sin(facing) * SEGMENT_LENGTH * j,
+          };
+          if (p.color === 'rainbow') seg.color = rainbowColor();
+          p.segments.push(seg);
+        }
+        p.angle = facing; p.targetAngle = facing;
+        p.alive = true; p.inGame = true; p.score = 0;
+        p.boostUntil = 0; p.boostReadyAt = 0; p.deathTick = 0;
+      });
+      for (let i = 0; i < BEAN_COUNT; i++) this._spawnBean();
+      if (!noTimer && !this._timer) this._timer = setInterval(() => this._tick(), TICK_MS);
+      return true;
+    }
+
+    _spawnBean() {
+      for (let tries = 0; tries < 30; tries++) {
+        const x = 30 + Math.random() * (MAP_SIZE - 60);
+        const y = 30 + Math.random() * (MAP_SIZE - 60);
+        let blocked = false;
+        for (const p of this.players.values()) {
+          if (!p.inGame) continue;
+          for (const seg of p.segments) {
+            if (Math.hypot(seg.x - x, seg.y - y) < CELL * 1.2) { blocked = true; break; }
+          }
+          if (blocked) break;
+        }
+        if (!blocked) { this.beans.push({ x, y }); return; }
+      }
+      this.beans.push({ x: 30 + Math.random() * (MAP_SIZE - 60), y: 30 + Math.random() * (MAP_SIZE - 60) });
+    }
+
+    input(pid, angle) {
+      const p = this.players.get(pid);
+      if (p && p.alive && typeof angle === 'number' && isFinite(angle)) p.targetAngle = angle;
+    }
+
+    boost(pid, on) {
+      const p = this.players.get(pid);
+      if (!p || !p.alive) return;
+      const now = Date.now();
+      if (on) {
+        if (now < p.boostReadyAt) return;  // 冷却中
+        p.boostUntil = now + BOOST_DURATION;
+        p.boostReadyAt = now + BOOST_DURATION + BOOST_COOLDOWN;
+      } else {
+        p.boostUntil = 0;
+      }
+    }
+
+    // ── 主循环 ──
+    _tick() {
+      if (!this.inGame) { return; }
+      this.tick++;
+
+      // 机器人 AI
+      for (const p of this.players.values()) {
+        if (p.bot && p.alive) this._botThink(p);
+      }
+
+      // 移动
+      for (const p of this.players.values()) {
+        if (!p.inGame || !p.alive) continue;
+        let ad = p.targetAngle - p.angle;
+        while (ad > Math.PI) ad -= 2 * Math.PI;
+        while (ad < -Math.PI) ad += 2 * Math.PI;
+        p.angle += ad * TURN_SPEED;
+        let speed = VERSUS_SPEED;
+        if (Date.now() < p.boostUntil) speed *= BOOST_MULT;
+        const head = p.segments[0];
+        head.x += Math.cos(p.angle) * speed;
+        head.y += Math.sin(p.angle) * speed;
+        for (let i = 1; i < p.segments.length; i++) {
+          const seg = p.segments[i], prev = p.segments[i - 1];
+          const dx = prev.x - seg.x, dy = prev.y - seg.y;
+          const d = Math.hypot(dx, dy);
+          if (d > SEGMENT_LENGTH) {
+            const move = Math.min(speed, d - SEGMENT_LENGTH);
+            seg.x += dx / d * move;
+            seg.y += dy / d * move;
+          }
+        }
+      }
+
+      // 碰撞检测（先移动完所有人再统一判定，保证公平）
+      const dead = [];
+      for (const p of this.players.values()) {
+        if (!p.inGame || !p.alive) continue;
+        const head = p.segments[0];
+        // 撞墙
+        if (head.x - WALL_MARGIN < 0 || head.x + WALL_MARGIN > MAP_SIZE ||
+            head.y - WALL_MARGIN < 0 || head.y + WALL_MARGIN > MAP_SIZE) {
+          dead.push([p, null, 'wall']);
+          continue;
+        }
+        // 撞自己（从第5节开始）
+        let selfHit = false;
+        for (let i = 4; i < p.segments.length; i++) {
+          if (Math.hypot(p.segments[i].x - head.x, p.segments[i].y - head.y) < COLLIDE_DIST) { selfHit = true; break; }
+        }
+        if (selfHit) { dead.push([p, null, 'self']); continue; }
+        // 撞别人
+        let killer = null;
+        for (const q of this.players.values()) {
+          if (q === p || !q.inGame || !q.alive) continue;
+          for (let i = 0; i < q.segments.length; i++) {
+            if (Math.hypot(q.segments[i].x - head.x, q.segments[i].y - head.y) < COLLIDE_DIST) { killer = q; break; }
+          }
+          if (killer) break;
+        }
+        if (killer) dead.push([p, killer, 'kill']);
+      }
+
+      for (const [p, killer, reason] of dead) this._kill(p, killer, reason);
+
+      // 吃豆
+      for (const p of this.players.values()) {
+        if (!p.inGame || !p.alive) continue;
+        const head = p.segments[0];
+        for (let i = this.beans.length - 1; i >= 0; i--) {
+          if (Math.hypot(this.beans[i].x - head.x, this.beans[i].y - head.y) < BEAN_EAT_DIST) {
+            this.beans.splice(i, 1);
+            p.score += 10;
+            const tail = p.segments[p.segments.length - 1];
+            const seg = { x: tail.x, y: tail.y };
+            if (p.color === 'rainbow') seg.color = rainbowColor();
+            p.segments.push(seg);
+            this._spawnBean();
+            break; // 每tick最多吃一颗
+          }
+        }
+      }
+
+      // 结束判定（单人局允许玩到自己死亡；多人局最后一人存活即胜）
+      if (this.aliveCount() === 0 || (this.gamePlayerCount() > 1 && this.aliveCount() === 1)) {
+        this._endGame();
+        return;
+      }
+
+      // 每4个tick发布一次状态 (30Hz/4 = 7.5Hz，在公共broker安全带宽内)
+      if (this.tick % 4 === 0) {
+        this._publishState();
+      }
+    }
+
+    _kill(p, killer, reason) {
+      if (!p.alive) return;
+      p.alive = false;
+      p.deathTick = this.tick;
+      p.deathOrder = ++this._deathCounter;
+      const aliveNow = this.aliveCount();
+      const total = this.gamePlayerCount();
+      // 通知本人
+      if (this.cb.onPlayerMsg && !p.bot) {
+        this.cb.onPlayerMsg(p.pid, { type: 'you_dead', ranking: aliveNow + 1, totalPlayers: total });
+      }
+      // 广播击杀通知
+      if (this.cb.onBroadcast) {
+        this.cb.onBroadcast({
+          type: 'player_dead',
+          playerName: p.name,
+          killerName: killer ? killer.name : null,
+          reason: reason,  // wall | self | kill | left
+        });
+      }
+    }
+
+    _endGame() {
+      this.inGame = false;
+      const finalTick = this.tick;
+      const winnerEntry = [...this.players.values()].find(p => p.inGame && p.alive);
+      const ranking = [...this.players.values()]
+        .filter(p => p.inGame)
+        .sort((a, b) => {
+          if (a.alive !== b.alive) return a.alive ? -1 : 1;
+          return b.deathOrder - a.deathOrder;  // 死得越晚排名越前
+        })
+        .map((p, i) => ({
+          id: p.pid, name: p.name, color: p.color, alive: p.alive,
+          score: p.score, rank: i + 1,
+          survivalTicks: p.alive ? finalTick : p.deathTick,
+        }));
+      // 时长取「真实经过时间」与「模拟 tick 数」的较大值，避免手动驱动/时钟漂移时失真
+      const durationSec = Math.max(1, Math.round(Math.max((Date.now() - this.startedAt) / 1000, finalTick / 30)));
+      const result = {
+        type: 'game_over',
+        matchId: this.matchId,
+        playerCount: ranking.length,
+        durationSec,
+        winner: winnerEntry ? { id: winnerEntry.pid, name: winnerEntry.name } : null,
+        ranking,
+      };
+      // 最终状态广播一次
+      this._publishState();
+      if (this.cb.onBroadcast) this.cb.onBroadcast(result);
+      if (this.cb.onGameOver) this.cb.onGameOver(result);
+      if (this._timer) { clearInterval(this._timer); this._timer = null; }
+    }
+
+    _publishState() {
+      if (!this.cb.onState) return;
+      const players = [...this.players.values()].filter(p => p.inGame)
+        .map(p => ({ pid: p.pid, score: p.score, alive: p.alive, segments: p.segments }));
+      const state = { tick: this.tick, players, beans: this.beans };
+      try {
+        this.cb.onState(encodeState(state));
+      } catch (e) { /* 编码失败忽略本帧 */ }
+    }
+
+    // ── 机器人 AI ──
+    _botThink(p) {
+      const head = p.segments[0];
+      // 偶尔犯错（可击败性，约每10秒一次小失误）
+      if (!p._jitterUntil) p._jitterUntil = 0;
+      const now = Date.now();
+      if (now > p._jitterUntil && Math.random() < 0.0015) {
+        p._jitterAngle = p.angle + (Math.random() - 0.5) * 2.2;
+        p._jitterUntil = now + 350 + Math.random() * 450;
+      }
+      if (now < p._jitterUntil) {
+        p.targetAngle = p._jitterAngle;
+        return;
+      }
+      // 找最近豆子
+      let target = null, bestD = Infinity;
+      for (const b of this.beans) {
+        const d = Math.hypot(b.x - head.x, b.y - head.y);
+        if (d < bestD) { bestD = d; target = b; }
+      }
+      if (!target) target = { x: MAP_SIZE / 2, y: MAP_SIZE / 2 };
+      let tx = target.x, ty = target.y;
+      let avoid = false;
+      // 前方障碍探测
+      const lookA = 150;
+      const px = head.x + Math.cos(p.angle) * lookA;
+      const py = head.y + Math.sin(p.angle) * lookA;
+      // 墙壁规避（贴近边缘时朝地图中心）
+      const edge = 220;
+      if (head.x < edge || head.x > MAP_SIZE - edge || head.y < edge || head.y > MAP_SIZE - edge ||
+          px < 60 || px > MAP_SIZE - 60 || py < 60 || py > MAP_SIZE - 60) {
+        tx = MAP_SIZE / 2 + (Math.random() - 0.5) * 300;
+        ty = MAP_SIZE / 2 + (Math.random() - 0.5) * 300;
+        avoid = true;
+      }
+      // 对头规避（防止迎头相撞同归于尽）
+      if (!avoid) {
+        for (const q of this.players.values()) {
+          if (q === p || !q.inGame || !q.alive || !q.segments.length) continue;
+          const qh = q.segments[0];
+          if (Math.hypot(qh.x - px, qh.y - py) < 150) {
+            const away = Math.atan2(py - qh.y, px - qh.x);
+            tx = head.x + Math.cos(away) * 250;
+            ty = head.y + Math.sin(away) * 250;
+            avoid = true;
+            break;
+          }
+        }
+      }
+      // 蛇身规避
+      if (!avoid) {
+        outer:
+        for (const q of this.players.values()) {
+          if (!q.inGame) continue;
+          for (let i = 0; i < q.segments.length; i += 2) {
+            const seg = q.segments[i];
+            if (Math.hypot(seg.x - px, seg.y - py) < 85) {
+              const away = Math.atan2(py - seg.y, px - seg.x);
+              tx = head.x + Math.cos(away) * 220;
+              ty = head.y + Math.sin(away) * 220;
+              avoid = true;
+              break outer;
+            }
+          }
+        }
+      }
+      p.targetAngle = Math.atan2(ty - head.y, tx - head.x);
+    }
+
+    destroy() {
+      if (this._timer) { clearInterval(this._timer); this._timer = null; }
+      this.inGame = false;
+    }
+  }
+
+  // ═══ 导出 ═══
+  global.S360Core = {
+    HostSim, encodeState, decodeState, randStr, roomCode4,
+    GRID, CELL, SIZE, MAP_SIZE, SEGMENT_LENGTH, SEGMENT_WIDTH,
+    VERSUS_SPEED, TURN_SPEED, TICK_MS, STATE_HZ, MAX_PLAYERS, PALETTE,
+  };
+})(window.__S360TMP_CORE__ = {});
+
+const MiniMQTT = window.__S360TMP_MQTT__.MiniMQTT;
+const _CORE = window.__S360TMP_CORE__.S360Core;
+const HostSim = _CORE.HostSim;
+const encodeState = _CORE.encodeState;
+const decodeState = _CORE.decodeState;
+const randStr = _CORE.randStr;
+const roomCode4 = _CORE.roomCode4;
+window.S360Lib = { MiniMQTT, HostSim, encodeState, decodeState, randStr, roomCode4 };
+
+// ═══════════════════════════════════════════════════════════════
+// 本地排行榜存储
+// ═══════════════════════════════════════════════════════════════
+const LB_KEY='snake360_leaderboard_v1', LB_MAX=100;
+function _lbAll(){ try{ const o=JSON.parse(localStorage.getItem(LB_KEY)||'{}'); return (o&&typeof o==='object')?o:{}; }catch(e){ return {}; } }
+function _lbSave(o){ try{ localStorage.setItem(LB_KEY,JSON.stringify(o)); }catch(e){} }
+async function apiSubmitScore(n,s,d,l){
+    if(!n) return {ok:false};
+    const diff=(d==='easy'||d==='normal'||d==='hard')?d:'easy';
+    const all=_lbAll();
+    if(!Array.isArray(all[diff])) all[diff]=[];
+    all[diff].push({ player_name:n, score:s|0, snake_length:l|0, ts:Date.now() });
+    all[diff].sort((a,b)=>b.score-a.score);
+    if(all[diff].length>LB_MAX) all[diff]=all[diff].slice(0,LB_MAX);
+    _lbSave(all);
+    return {ok:true};
+}
+async function apiGetLeaderboard(d){
+    const diff=(d==='easy'||d==='normal'||d==='hard')?d:'easy';
+    const all=_lbAll();
+    const rows=Array.isArray(all[diff])?all[diff]:[];
+    const best={};
+    for(const r of rows){ const k=r.player_name; if(!best[k]||r.score>best[k].score) best[k]=r; }
+    return Object.values(best).sort((a,b)=>b.score-a.score).slice(0,20);
+}
+async function apiRename(oldName,newName){
+    if(!newName) return {ok:false};
+    const all=_lbAll();
+    for(const diff of Object.keys(all)){
+        if(!Array.isArray(all[diff])) continue;
+        for(const r of all[diff]){ if(r.player_name===oldName) r.player_name=newName; }
+    }
+    _lbSave(all);
+    return {ok:true};
+}
+
+            // Canvas
+            const canvas=document.getElementById('gameCanvas'),ctx=canvas.getContext('2d');
+            const GRID=28,CELL=18,SIZE=GRID*CELL; canvas.width=SIZE;canvas.height=SIZE;
+
+            // Difficulty
+            const DIFFICULTY={ easy:{name:'简单',cssClass:'easy',speedMultiplier:0.5,selfCollision:false,initBodyLength:4}, normal:{name:'一般',cssClass:'normal',speedMultiplier:0.75,selfCollision:true,initBodyLength:4}, hard:{name:'困难',cssClass:'hard',speedMultiplier:1.0,selfCollision:true,initBodyLength:6} };
+            const BASE_SPEED=2.5;
+
+            // Persisted settings
+            const SETTINGS_KEY='snake360_settings';
+            let settings=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
+            function saveSettings(){ localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings)); }
+            if(!settings.snakeColor) settings.snakeColor='green';
+            if(!settings.sensitivity) settings.sensitivity=50;
+            if(!settings.customSpeed) settings.customSpeed=100;
+            if(settings.tailCollision===undefined) settings.tailCollision=true;
+
+            const SNAKE_COLORS={
+                green:{ head:'#4caf50', body:[40,160,60], bodyStroke:[80,190,80], glow:'rgba(80,255,80,0.8)' },
+                blue:{ head:'#42a5f5', body:[30,130,220], bodyStroke:[60,160,240], glow:'rgba(60,180,255,0.8)' },
+                purple:{ head:'#ab47bc', body:[120,50,160], bodyStroke:[150,80,180], glow:'rgba(160,80,220,0.8)' },
+                orange:{ head:'#ff7043', body:[200,90,40], bodyStroke:[230,120,60], glow:'rgba(255,120,60,0.8)' },
+                pink:{ head:'#ec407a', body:[200,50,100], bodyStroke:[230,80,130], glow:'rgba(240,80,140,0.8)' },
+                yellow:{ head:'#fdd835', body:[180,160,30], bodyStroke:[210,190,50], glow:'rgba(250,220,60,0.8)' },
+                cyan:{ head:'#26c6da', body:[30,160,180], bodyStroke:[50,190,210], glow:'rgba(40,210,230,0.8)' },
+                white:{ head:'#e0e0e0', body:[160,160,160], bodyStroke:[190,190,190], glow:'rgba(220,220,220,0.8)' }
+            };
+
+            // Player name
+            const NAME_KEY='snake360_name';
+            const GUEST_COUNTER_KEY='snake360_guest_counter';
+            let playerName=localStorage.getItem(NAME_KEY)||'';
+
+            function generateGuestName(){
+                let n=0;
+                try{ n=parseInt(localStorage.getItem(GUEST_COUNTER_KEY)||'0')||0; }catch(e){}
+                n=(n+1)%8900+1000;
+                try{ localStorage.setItem(GUEST_COUNTER_KEY,String(n)); }catch(e){}
+                return '游客' + n;
+            }
+
+            // Game state
+            let snake=[],beans=[],angle=0,targetAngle=0,speed=BASE_SPEED,baseSpeed=BASE_SPEED;
+            let score=0,gameOver=false,gameStarted=false,frameCount=0,trailPositions=[],joystickActive=false;
+            let currentDifficulty=null, isCustomMode=false, customSpeedMult=1.0, customTailCollision=true;
+            let turnSpeed=0.12; // sensitivity
+            let reviveUsed=false; // track if revive already used in custom mode
+
+            // DOM
+            const scoreEl=document.getElementById('score'),lengthEl=document.getElementById('length'),speedEl=document.getElementById('speed-display'),diffBadge=document.getElementById('diffBadge'),playerNameTag=document.getElementById('playerNameTag'),diffOverlay=document.getElementById('diffOverlay'),nameOverlay=document.getElementById('nameOverlay'),gameOverOverlay=document.getElementById('gameOverOverlay'),finalScoreEl=document.getElementById('finalScore'),finalDiffEl=document.getElementById('finalDiff'),joystickZone=document.getElementById('joystickZone'),joystickThumb=document.getElementById('joystickThumb');
+            const SEGMENT_LENGTH=CELL*1.15,SEGMENT_WIDTH=CELL*0.65;
+            let currentLbTab='easy',currentGoTab='settings';
+
+            // ─── Settings UI ──────────────────────────
+            // Helper to sync settings across both overlays
+            function syncSettingSliders(){
+                // Sensitivity sliders (both overlays)
+                document.querySelectorAll('[id$="SliderInit"], #sensSlider').forEach(el=>{ if(el.id.includes('sens')||el.id==='sensSlider') el.value=settings.sensitivity; });
+                document.querySelectorAll('[id$="FillInit"], #sensFill').forEach(el=>{ if(el.id.includes('sens')||el.id==='sensFill') el.style.width=settings.sensitivity+'%'; });
+                document.querySelectorAll('[id$="ValInit"], #sensVal').forEach(el=>{ if(el.id.includes('sens')||el.id==='sensVal') el.textContent=settings.sensitivity+'%'; });
+                // Custom speed sliders
+                document.querySelectorAll('[id$="SliderInit"], #customSpeedSlider').forEach(el=>{ if(el.id.includes('customSpeed')||el.id==='customSpeedSlider') el.value=settings.customSpeed; });
+                document.querySelectorAll('[id$="FillInit"], #customSpeedFill').forEach(el=>{ if(el.id.includes('customSpeed')||el.id==='customSpeedFill') updateCustomSpeedFill(el, settings.customSpeed); });
+                document.querySelectorAll('[id$="ValInit"], #customSpeedVal').forEach(el=>{ if(el.id.includes('customSpeed')||el.id==='customSpeedVal') el.textContent=(settings.customSpeed/100).toFixed(2)+'x'; });
+                // Color dots
+                document.querySelectorAll('.color-dot').forEach(d=>d.classList.toggle('selected', d.dataset.color===settings.snakeColor));
+                // Tail collision toggle
+                document.querySelectorAll('.toggle-switch').forEach(sw=>sw.classList.toggle('on', settings.tailCollision));
+                // Custom mode description
+                document.querySelectorAll('[id^="customDesc"]').forEach(el=>{
+                    el.textContent='娱乐模式 · 成绩不计入排行榜 · '+(settings.tailCollision?'碰尾巴会失败':'碰尾巴不失败');
+                });
+            }
+
+            function updateCustomSpeedFill(el, v){ el.style.width=((v-50)/(120-50)*100)+'%'; }
+
+            // Wire up all sliders
+            document.querySelectorAll('.slider-input').forEach(sl=>{
+                sl.addEventListener('input',()=>{
+                    const v=parseInt(sl.value);
+                    if(sl.id.includes('sens')){
+                        settings.sensitivity=v; turnSpeed=0.06+(v/100)*0.18;
+                    } else if(sl.id.includes('customSpeed')){
+                        settings.customSpeed=v;
+                    }
+                    saveSettings();
+                    syncSettingSliders();
+                });
+            });
+
+            // Wire up all color dots
+            document.querySelectorAll('.color-dot').forEach(d=>{ d.addEventListener('click',()=>{ settings.snakeColor=d.dataset.color; saveSettings(); syncSettingSliders(); }); });
+
+            // Wire up tail collision toggles
+            document.querySelectorAll('.toggle-switch').forEach(sw=>{
+                sw.addEventListener('click',()=>{
+                    settings.tailCollision=!settings.tailCollision;
+                    saveSettings();
+                    syncSettingSliders();
+                });
+            });
+
+            turnSpeed=0.06+(settings.sensitivity/100)*0.18;
+            syncSettingSliders();
+
+            async function apiRename(oldName, newName) {
+                if(!newName) return {ok:false};
+                const all=_lbAll();
+                for(const diff of Object.keys(all)){
+                    if(!Array.isArray(all[diff])) continue;
+                    for(const r of all[diff]){ if(r.player_name===oldName) r.player_name=newName; }
+                }
+                _lbSave(all);
+                return {ok:true};
+            }
+
+            // ─── Player Name ──────────────────────────
+            function updatePlayerNameUI(){
+                const renameLink=document.getElementById('renameLink');
+                if(playerName){
+                    playerNameTag.textContent=playerName; playerNameTag.style.display='';
+                    renameLink.style.display='';
+                } else {
+                    playerNameTag.style.display='none';
+                    renameLink.style.display='none';
+                }
+            }
+            function showRename(){
+                // Block rename during active game
+                if(gameStarted && !gameOver) return;
+                if(versusState.active) return;
+                const oldName=playerName||'';
+                document.getElementById('nameInput').value=oldName;
+                document.getElementById('nameInput').dataset.rename='true';
+                document.querySelector('.name-overlay h2').textContent='✏️ 修改名字';
+                document.querySelector('.name-subtitle').textContent='新名字将同步到排行榜';
+                document.getElementById('nameSkipBtn').style.display='none';
+                nameOverlay.classList.remove('hidden');
+                setTimeout(()=>document.getElementById('nameInput').focus(),300);
+            }
+            function showNameInput(isFirstTime){
+                document.getElementById('nameInput').value=playerName||'';
+                delete document.getElementById('nameInput').dataset.rename;
+                document.querySelector('.name-overlay h2').textContent='🎮 输入你的名字';
+                document.querySelector('.name-subtitle').textContent='加入全球排行榜';
+                document.getElementById('nameSkipBtn').style.display=isFirstTime?'':'none';
+                nameOverlay.classList.remove('hidden');
+                setTimeout(()=>document.getElementById('nameInput').focus(),300);
+            }
+            function skipName(){
+                playerName=generateGuestName();
+                localStorage.setItem(NAME_KEY,playerName);
+                updatePlayerNameUI();
+                nameOverlay.classList.add('hidden');
+                if(pendingScore) submitPendingScore();
+                showMainMenu();
+            }
+            function confirmName(){
+                const n=document.getElementById('nameInput').value.trim();
+                if(!n)return;
+                const isRename=document.getElementById('nameInput').dataset.rename==='true';
+                if(isRename&&playerName&&playerName!==n){
+                    apiRename(playerName,n).catch(()=>{});
+                }
+                playerName=n;
+                localStorage.setItem(NAME_KEY,playerName);
+                updatePlayerNameUI();
+                nameOverlay.classList.add('hidden');
+                if(pendingScore) submitPendingScore();
+                loadLeaderboard(currentLbTab);
+                // Notify versus room of name change
+                if(currentRoomCode){
+                    if(versusMeta[myPid]) versusMeta[myPid].name=playerName;
+                    if(hostSim){ hostSim.renamePlayer(myPid,playerName); broadcastRoomState(); }
+                    else sendWs({type:'rename',name:playerName,pid:myPid,roomCode:currentRoomCode});
+                }
+            }
+            let pendingScore=null;
+            function submitPendingScore(){ if(!pendingScore||!playerName)return; const{d,p,l}=pendingScore; pendingScore=null; apiSubmitScore(playerName,p,d,l).then(()=>loadLeaderboard(currentLbTab)).catch(()=>{}); }
+
+            function showMainMenu(){
+                diffOverlay.classList.remove('hidden');
+                nameOverlay.classList.add('hidden');
+                gameOverOverlay.classList.add('hidden');
+                // Restore rename link when back to menu
+                if(playerName) document.getElementById('renameLink').style.display='';
+            }
+
+            // ─── Leaderboard ──────────────────────────
+            function getLbList(){ return document.getElementById('lbList')||document.getElementById('lbListInit'); }
+            function getBothLbLists(){ return [document.getElementById('lbList'),document.getElementById('lbListInit')].filter(Boolean); }
+            function loadLeaderboard(diff){
+                const lists=getBothLbLists(); if(lists.length===0)return;
+                lists.forEach(list=>list.innerHTML='<div class="lb-loading">加载中...</div>');
+                apiGetLeaderboard(diff).then(data=>{ if(!Array.isArray(data)||data.length===0){ lists.forEach(list=>list.innerHTML='<div class="lb-empty">暂无记录</div>'); return; } const html=data.map((r,i)=>{ const rc=i===0?'top1':i===1?'top2':i===2?'top3':'',m=i===0?'🥇':i===1?'🥈':i===2?'🥉':'',isMe=playerName&&r.player_name===playerName; return`<div class="lb-item" style="${isMe?'background:rgba(76,175,80,0.12);':''}"><span class="lb-rank ${rc}">${m||'#'+(i+1)}</span><span class="lb-name" style="${isMe?'color:#66bb6a;':''}">${escHtml(r.player_name)}${isMe?' ⭐':''}</span><span class="lb-score">${r.score}分</span></div>`; }).join(''); lists.forEach(list=>list.innerHTML=html); }).catch(()=>{lists.forEach(list=>list.innerHTML='<div class="lb-empty">暂无记录</div>');});
+            }
+            function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+            function switchLbTab(diff){ currentLbTab=diff; document.querySelectorAll('.lb-tab').forEach(t=>{t.classList.remove('active','easy','normal','hard');if(t.dataset.tab===diff)t.classList.add('active',diff);}); loadLeaderboard(diff); }
+
+            // ─── Game Over Tabs ───────────────────────
+            function switchGoTab(panelName, containerId){
+                currentGoTab=panelName;
+                const container=document.getElementById(containerId||'gameOverOverlay');
+                container.querySelectorAll('.go-tab').forEach(t=>t.classList.toggle('active',t.dataset.panel===panelName));
+                // Match panel IDs: both "panelSettings" and "initialPanelSettings"
+                const panelClass=panelName.charAt(0).toUpperCase()+panelName.slice(1);
+                container.querySelectorAll('.go-panel').forEach(p=>{
+                    const match=p.id==='panel'+panelClass||p.id==='initialPanel'+panelClass;
+                    p.classList.toggle('active',match);
+                });
+                if(panelName==='leaderboard') loadLeaderboard(currentLbTab);
+            }
+
+            // ─── Game Flow ────────────────────────────
+            function startRankedGame(diffKey){
+                currentDifficulty=diffKey; isCustomMode=false;
+                const cfg=DIFFICULTY[diffKey];
+                diffBadge.textContent=cfg.name; diffBadge.className='difficulty-badge '+cfg.cssClass; diffBadge.style.display='';
+                document.getElementById('restartBtn').style.display='';
+                diffOverlay.classList.add('hidden'); nameOverlay.classList.add('hidden'); gameOverOverlay.classList.add('hidden');
+                startGame(cfg.speedMultiplier,cfg.selfCollision,cfg.initBodyLength);
+            }
+
+            function startCustomGame(){
+                const csSlider=document.getElementById('customSpeedSlider')||document.getElementById('customSpeedSliderInit');
+                const mult=parseInt(csSlider.value)/100;
+                currentDifficulty=null; isCustomMode=true; customSpeedMult=mult; customTailCollision=settings.tailCollision; reviveUsed=false;
+                diffBadge.textContent='娱乐'; diffBadge.className='difficulty-badge custom'; diffBadge.style.display='';
+                document.getElementById('restartBtn').style.display='';
+                diffOverlay.classList.add('hidden'); nameOverlay.classList.add('hidden'); gameOverOverlay.classList.add('hidden');
+                startGame(mult,customTailCollision,4);
+            }
+
+            function startGame(speedMult,selfCol,bodyLen){
+                initSnake(bodyLen); initBeans();
+                baseSpeed=BASE_SPEED*speedMult; speed=baseSpeed;
+                score=0; gameOver=false; gameStarted=true; updateUI();
+                // Disable rename during game
+                document.getElementById('renameLink').style.display='none';
+            }
+
+            function randomRainbowColor(){
+                const h=Math.random()*360;
+                const s=70+Math.random()*30; // 70-100%
+                const l=40+Math.random()*20; // 40-60%
+                return {h,s,l};
+            }
+
+            function initSnake(bodyCount){ snake=[]; const sx=SIZE/2,sy=SIZE/2,ia=-Math.PI/2; const head={x:sx,y:sy,angle:ia}; if(settings.snakeColor==='rainbow') head.color=randomRainbowColor(); snake.push(head); for(let i=1;i<=bodyCount;i++){ const seg={x:sx-Math.cos(ia)*SEGMENT_LENGTH*i,y:sy-Math.sin(ia)*SEGMENT_LENGTH*i,angle:ia}; if(settings.snakeColor==='rainbow') seg.color=randomRainbowColor(); snake.push(seg); } angle=ia;targetAngle=ia;trailPositions=[]; }
+            function spawnBean(){ const m=1,bx=m+Math.floor(Math.random()*(GRID-2*m)),by=m+Math.floor(Math.random()*(GRID-2*m)),px=bx*CELL+CELL/2,py=by*CELL+CELL/2; for(const seg of snake)if(Math.hypot(seg.x-px,seg.y-py)<CELL*0.8)return spawnBean(); beans.push({x:px,y:py,pulse:Math.random()*Math.PI*2,size:CELL*0.35}); }
+            function initBeans(){beans=[];for(let i=0;i<5;i++)spawnBean();}
+            function checkWallCollision(x,y){const r=SEGMENT_WIDTH*0.6;return x-r<0||x+r>SIZE||y-r<0||y+r>SIZE;}
+            function checkSelfCollision(hx,hy){ if(isCustomMode){ if(!customTailCollision)return false; for(let i=4;i<snake.length;i++)if(Math.hypot(snake[i].x-hx,snake[i].y-hy)<SEGMENT_WIDTH*0.9)return true; return false; } if(!currentDifficulty||!DIFFICULTY[currentDifficulty].selfCollision)return false; for(let i=4;i<snake.length;i++)if(Math.hypot(snake[i].x-hx,snake[i].y-hy)<SEGMENT_WIDTH*0.9)return true; return false; }
+            function checkBeanCollision(hx,hy){for(let i=beans.length-1;i>=0;i--)if(Math.hypot(beans[i].x-hx,beans[i].y-hy)<CELL*0.7){beans.splice(i,1);return true;}return false;}
+            function addSegment(){const last=snake[snake.length-1],prev=snake.length>=2?snake[snake.length-2]:last,d=Math.hypot(last.x-prev.x,last.y-prev.y)||1; const seg={x:last.x-(last.x-prev.x)/d*SEGMENT_LENGTH*0.7,y:last.y-(last.y-prev.y)/d*SEGMENT_LENGTH*0.7,angle:last.angle}; if(settings.snakeColor==='rainbow') seg.color=randomRainbowColor(); snake.push(seg);}
+
+            function updateSnake(){
+                if(gameOver||!gameStarted)return;
+                let ad=targetAngle-angle;while(ad>Math.PI)ad-=2*Math.PI;while(ad<-Math.PI)ad+=2*Math.PI;
+                angle+=ad*turnSpeed;
+                const head=snake[0];head.x+=Math.cos(angle)*speed;head.y+=Math.sin(angle)*speed;head.angle=angle;
+                trailPositions.unshift({x:head.x,y:head.y,angle});
+                const maxTrail=Math.ceil(snake.length*SEGMENT_LENGTH/speed*1.5);if(trailPositions.length>maxTrail)trailPositions.length=maxTrail;
+                for(let i=1;i<snake.length;i++){const seg=snake[i],td=i*SEGMENT_LENGTH*0.95;let dist=0,tx=head.x,ty=head.y,ta=head.angle;for(let j=0;j<trailPositions.length-1;j++){const p0=trailPositions[j],p1=trailPositions[j+1],step=Math.hypot(p0.x-p1.x,p0.y-p1.y);if(dist+step>=td){const t=step>0.001?(td-dist)/step:0;tx=p0.x+(p1.x-p0.x)*t;ty=p0.y+(p1.y-p0.y)*t;ta=p0.angle;break;}dist+=step;tx=p1.x;ty=p1.y;ta=p1.angle;}seg.x+=(tx-seg.x)*0.4;seg.y+=(ty-seg.y)*0.4;let dd=ta-seg.angle;while(dd>Math.PI)dd-=2*Math.PI;while(dd<-Math.PI)dd+=2*Math.PI;seg.angle+=dd*0.35;}
+                if(checkWallCollision(head.x,head.y)||checkSelfCollision(head.x,head.y)){endGame();return;}
+                if(checkBeanCollision(head.x,head.y)){score+=10;addSegment();spawnBean(); const initLen=isCustomMode?4:DIFFICULTY[currentDifficulty].initBodyLength; speed=baseSpeed+(snake.length-initLen-1)*0.05; updateUI();}
+            }
+
+            function endGame(){
+                gameOver=true;gameStarted=false;
+
+                // Custom mode: offer revive on first death
+                if(isCustomMode && !reviveUsed){
+                    reviveUsed=true;
+                    document.getElementById('reviveSubtitle').innerHTML='保留当前分数 <strong>'+score+'</strong> 分和 <strong>'+snake.length+'</strong> 长度重新开始<br>仅限本次死亡，第二次将直接结束';
+                    document.getElementById('reviveOverlay').classList.remove('hidden');
+                    return;
+                }
+
+                finalScoreEl.textContent='得分: '+score;
+                if(isCustomMode) finalDiffEl.textContent='模式: 娱乐 ('+customSpeedMult.toFixed(2)+'x)';
+                else if(currentDifficulty) finalDiffEl.textContent='难度: '+DIFFICULTY[currentDifficulty].name;
+
+                if(score>0&&!isCustomMode){
+                    if(!playerName){ pendingScore={diff:currentDifficulty,pts:score,l:snake.length}; showNameInput(false); }
+                    else apiSubmitScore(playerName,score,currentDifficulty,snake.length).catch(()=>{});
+                }
+                // Go to the relevant tab: ranked for ranked, custom for custom
+                switchGoTab(isCustomMode?'custom':'ranked', 'gameOverOverlay');
+                // Show fail screen first, click anywhere to continue
+                document.getElementById('failOverlay').classList.remove('hidden');
+                // Don't show gameOverOverlay yet — it shows after clicking fail screen
+                gameOverOverlay.classList.add('hidden');
+            }
+
+            function updateUI(){scoreEl.textContent=score;lengthEl.textContent=snake.length;speedEl.textContent=(Math.round((speed/BASE_SPEED)*10)/10)+'x';}
+
+            // ─── Drawing ───────────────────────────────
+            function drawGrid(){ctx.strokeStyle='rgba(255,255,255,0.03)';ctx.lineWidth=0.5;for(let i=0;i<=GRID;i++){const p=i*CELL;ctx.beginPath();ctx.moveTo(p,0);ctx.lineTo(p,SIZE);ctx.stroke();ctx.beginPath();ctx.moveTo(0,p);ctx.lineTo(SIZE,p);ctx.stroke();}}
+            function drawWallGlow(){ctx.strokeStyle='rgba(255,60,60,0.4)';ctx.lineWidth=2;ctx.shadowColor='rgba(255,40,40,0.6)';ctx.shadowBlur=8;ctx.strokeRect(4,4,SIZE-8,SIZE-8);ctx.shadowBlur=0;}
+            function drawEllipse(cx,cy,a,rx,ry,fill,stroke){ctx.save();ctx.translate(cx,cy);ctx.rotate(a);ctx.beginPath();ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2);ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke();}ctx.restore();}
+            function drawSnake(){
+                if(snake.length===0)return;
+                const isRainbow=settings.snakeColor==='rainbow';
+                const sc=SNAKE_COLORS[settings.snakeColor]||SNAKE_COLORS.green;
+
+                // Helper: get color for a segment (rainbow: per-segment; normal: theme-based)
+                function segBodyColor(seg,i){
+                    if(isRainbow && seg.color){
+                        const c=seg.color, l=c.l+(i/snake.length)*15;
+                        return `hsl(${c.h},${c.s}%,${Math.min(80,l)}%)`;
+                    }
+                    const t=i/snake.length,br=0.3+t*0.5;
+                    return `rgb(${sc.body[0]+br*30|0},${sc.body[1]+br*60|0},${sc.body[2]+br*30|0})`;
+                }
+                function segStrokeColor(seg,i){
+                    if(isRainbow && seg.color){
+                        const c=seg.color;
+                        return `hsla(${c.h},${c.s}%,${Math.min(70,c.l+5)}%,0.6)`;
+                    }
+                    const t=i/snake.length,br=0.3+t*0.5;
+                    return `rgba(${sc.bodyStroke[0]+br*30|0},${sc.bodyStroke[1]+br*30|0},${sc.bodyStroke[2]+br*20|0},0.6)`;
+                }
+
+                for(let i=snake.length-1;i>=1;i--){
+                    const seg=snake[i],t=i/snake.length,scl=0.7+t*0.3;
+                    drawEllipse(seg.x,seg.y,seg.angle,SEGMENT_LENGTH*0.45*scl,SEGMENT_WIDTH*0.4*scl,
+                        segBodyColor(seg,i), segStrokeColor(seg,i));
+                }
+
+                // Head
+                const head=snake[0];
+                let headFill, headGlow;
+                if(isRainbow && head.color){
+                    const c=head.color;
+                    headFill=`hsl(${c.h},${c.s}%,${Math.min(70,c.l+15)}%)`;
+                    headGlow=`hsla(${c.h},${c.s}%,${c.l}%,0.6)`;
+                } else {
+                    headFill=sc.head;
+                    headGlow=sc.glow;
+                }
+                ctx.save();ctx.translate(head.x,head.y);ctx.rotate(head.angle);
+                ctx.shadowColor=headGlow;ctx.shadowBlur=15;
+                ctx.beginPath();ctx.ellipse(0,0,SEGMENT_LENGTH*0.55,SEGMENT_WIDTH*0.48,0,0,Math.PI*2);ctx.fillStyle=headFill;ctx.fill();ctx.shadowBlur=0;
+                ctx.beginPath();ctx.ellipse(2,-3,SEGMENT_LENGTH*0.2,SEGMENT_WIDTH*0.18,0,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.35)';ctx.fill();
+                const eox=SEGMENT_LENGTH*0.3,eoy=SEGMENT_WIDTH*0.28;for(const[ex,ey]of[[eox,-eoy],[eox,eoy]]){ctx.beginPath();ctx.arc(ex,ey,4,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.beginPath();ctx.arc(ex+1.5,ey,2,0,Math.PI*2);ctx.fillStyle='#111';ctx.fill();}
+                if(Math.floor(frameCount/20)%2===0){const tx=SEGMENT_LENGTH*0.55;ctx.beginPath();ctx.moveTo(SEGMENT_LENGTH*0.4,0);ctx.lineTo(tx+4,-3);ctx.moveTo(SEGMENT_LENGTH*0.4,0);ctx.lineTo(tx+4,3);ctx.strokeStyle='#ff5252';ctx.lineWidth=1.5;ctx.lineCap='round';ctx.stroke();}
+                ctx.restore();
+            }
+            function drawBeans(){for(const b of beans){const pulse=1+Math.sin(frameCount*0.08+b.pulse)*0.2,r=b.size*pulse;ctx.save();ctx.translate(b.x,b.y);ctx.shadowColor='rgba(255,200,60,0.8)';ctx.shadowBlur=10;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);const g=ctx.createRadialGradient(-r*0.3,-r*0.3,0,0,0,r);g.addColorStop(0,'#ffe082');g.addColorStop(0.5,'#ffb74d');g.addColorStop(1,'#ff8f00');ctx.fillStyle=g;ctx.fill();ctx.shadowBlur=0;ctx.beginPath();ctx.arc(-r*0.25,-r*0.25,r*0.3,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fill();ctx.restore();}}
+            function render(){ctx.clearRect(0,0,SIZE,SIZE);ctx.fillStyle='#0f0f23';ctx.fillRect(0,0,SIZE,SIZE);drawGrid();drawWallGlow();if(gameStarted){drawBeans();drawSnake();}}
+
+            // ─── Joystick ─────────────────────────────
+            function getJoystickPos(e){const rect=joystickZone.getBoundingClientRect(),cx=rect.left+rect.width/2,cy=rect.top+rect.height/2,maxR=rect.width/2-28,cx2=e.touches?e.touches[0].clientX:e.clientX,cy2=e.touches?e.touches[0].clientY:e.clientY;let dx=cx2-cx,dy=cy2-cy;const dist=Math.hypot(dx,dy);if(dist>maxR){dx=(dx/dist)*maxR;dy=(dy/dist)*maxR;}return{dx,dy};}
+            function updateJoystick(e){const pos=getJoystickPos(e);joystickThumb.style.transform=`translate(${pos.dx}px,${pos.dy}px)`;if(Math.abs(pos.dx)>3||Math.abs(pos.dy)>3){targetAngle=Math.atan2(pos.dy,pos.dx); if(versusState.active) maybeSendVersusInput(targetAngle);}}
+            function resetJoystick(){joystickThumb.style.transform='translate(0px,0px)';joystickActive=false;}
+
+            // ─── Events ───────────────────────────────
+            // Ranked diff buttons (both overlays)
+            document.querySelectorAll('.ranked-diff-btn').forEach(btn=>{const h=e=>{e.preventDefault();e.stopPropagation();startRankedGame(btn.dataset.diff);};btn.addEventListener('touchstart',h,{passive:false});btn.addEventListener('click',h);});
+            // Custom start buttons (both overlays)
+            document.querySelectorAll('.custom-start-btn').forEach(btn=>{btn.addEventListener('click',startCustomGame);});
+            // Name confirm + rename link + skip
+            document.getElementById('nameConfirmBtn').addEventListener('click',confirmName);
+            document.getElementById('nameSkipBtn').addEventListener('click',skipName);
+            document.getElementById('nameInput').addEventListener('keydown',e=>{if(e.key==='Enter')confirmName();});
+            document.getElementById('renameLink').addEventListener('click',showRename);
+            // Game over tabs — handle clicks within each overlay independently
+            document.querySelectorAll('.go-tab').forEach(t=>{t.addEventListener('click',function(){ const overlay=this.closest('.full-overlay'); switchGoTab(this.dataset.panel, overlay.id); });});
+            // Leaderboard sub-tabs
+            document.querySelectorAll('.lb-tab').forEach(t=>{t.addEventListener('click',()=>switchLbTab(t.dataset.tab));});
+            // Restart
+            document.getElementById('restartBtn').addEventListener('click',()=>{ if(!currentDifficulty&&!isCustomMode)return; gameOverOverlay.classList.add('hidden'); reviveUsed=false; if(isCustomMode) startGame(customSpeedMult,customTailCollision,4); else startGame(DIFFICULTY[currentDifficulty].speedMultiplier,DIFFICULTY[currentDifficulty].selfCollision,DIFFICULTY[currentDifficulty].initBodyLength); });
+
+            // Fail overlay: click anywhere to dismiss and show mode selection
+            document.getElementById('failOverlay').addEventListener('click',()=>{
+                document.getElementById('failOverlay').classList.add('hidden');
+                gameOverOverlay.classList.remove('hidden');
+            });
+
+            // Revive handlers
+            document.getElementById('reviveConfirmBtn').addEventListener('click',()=>{
+                document.getElementById('reviveOverlay').classList.add('hidden');
+                // Keep score AND snake length, just re-init snake body with same length
+                const savedScore=score, savedLength=snake.length;
+                initSnake(Math.max(3,savedLength-1)); initBeans();
+                baseSpeed=BASE_SPEED*customSpeedMult; speed=baseSpeed+(savedLength-4)*0.05;
+                score=savedScore; gameOver=false; gameStarted=true; updateUI();
+            });
+            document.getElementById('reviveRejectBtn').addEventListener('click',()=>{
+                document.getElementById('reviveOverlay').classList.add('hidden');
+                finalScoreEl.textContent='得分: '+score;
+                finalDiffEl.textContent='模式: 娱乐 ('+customSpeedMult.toFixed(2)+'x)';
+                if(score>0&&!isCustomMode){
+                    if(!playerName){ pendingScore={diff:currentDifficulty,pts:score,l:snake.length}; showNameInput(false); }
+                    else apiSubmitScore(playerName,score,currentDifficulty,snake.length).catch(()=>{});
+                }
+                switchGoTab('custom', 'gameOverOverlay');
+                document.getElementById('failOverlay').classList.remove('hidden');
+                gameOverOverlay.classList.add('hidden');
+            });
+
+            // Joystick events
+            joystickZone.addEventListener('touchstart',e=>{if(!gameStarted&&!versusState.active)return;e.preventDefault();joystickActive=true;updateJoystick(e);},{passive:false});
+            joystickZone.addEventListener('mousedown',e=>{if(!gameStarted&&!versusState.active)return;joystickActive=true;updateJoystick(e);});
+            window.addEventListener('touchmove',e=>{if(joystickActive&&(gameStarted||versusState.active)){e.preventDefault();updateJoystick(e);}},{passive:false});
+            window.addEventListener('mousemove',e=>{if(joystickActive&&(gameStarted||versusState.active))updateJoystick(e);});
+            const endJ=()=>resetJoystick();window.addEventListener('mouseup',endJ);window.addEventListener('touchend',endJ);window.addEventListener('touchcancel',endJ);
+
+            // Keyboard
+            window.addEventListener('keydown',e=>{
+                // 对战模式：键盘方向键也要能操控
+                if(versusState.active){
+                    const k=e.key.toLowerCase();
+                    let a=null;
+                    if(k==='w'||k==='arrowup') a=-Math.PI/2;
+                    else if(k==='s'||k==='arrowdown') a=Math.PI/2;
+                    else if(k==='a'||k==='arrowleft') a=Math.PI;
+                    else if(k==='d'||k==='arrowright') a=0;
+                    else if(k===' ') { e.preventDefault(); activateBoost(); return; }
+                    if(a!==null){ e.preventDefault(); targetAngle=a; maybeSendVersusInput(a); }
+                    return;
+                }
+                if(!gameStarted){if(e.key==='1')startRankedGame('easy');if(e.key==='2')startRankedGame('normal');if(e.key==='3')startRankedGame('hard');return;}
+                switch(e.key.toLowerCase()){case'w':case'arrowup':targetAngle=-Math.PI/2;break;case's':case'arrowdown':targetAngle=Math.PI/2;break;case'a':case'arrowleft':targetAngle=Math.PI;break;case'd':case'arrowright':targetAngle=0;break;case'r':document.getElementById('restartBtn').click();break;}
+            });
+
+            // ═══════════════════════════════════════════════
+            // ─── Versus (Multiplayer) ──────────────────────
+            // ═══════════════════════════════════════════════
+
+            let ws=null, myPlayerId=null, currentRoomCode=null, currentInviteCode=null;
+            let versusState={ active:false, snakes:[], beans:[], isSpectator:false, gameOver:false };
+
+            const versusRoomOverlay=document.getElementById('versusRoomOverlay');
+            const quickMatchOverlay=document.getElementById('quickMatchOverlay');
+            const versusDeadOverlay=document.getElementById('versusDeadOverlay');
+            const versusGameOverOverlay=document.getElementById('versusGameOverOverlay');
+            const failOverlayEl=document.getElementById('failOverlay');
+
+            // ═══════════════════════════════════════════════════════
+            // ─── MQTT 网络层（替代原 WebSocket 服务器）─────────────
+            // ═══════════════════════════════════════════════════════
+            const MQTT_BROKERS=[
+                'wss://broker-cn.emqx.io:8084/mqtt',
+                'wss://broker.emqx.io:8084/mqtt',
+                'wss://broker.hivemq.com:8884/mqtt'
+            ];
+            const TP='s360x/v2/';
+            const SIG_TOPIC=TP+'signal';
+            const rqTopic=c=>TP+'q/'+c;
+            const rsTopic=c=>TP+'s/'+c;
+            const rpTopic=c=>TP+'p/'+c;
+
+            let mqtt=null, mqttReady=false, brokerIdx=0;
+            let myPid=null, hostSim=null, roomHostPid=null;
+            let pendingOut=[];
+            let versusMeta={};
+
+            const PID_KEY='snake360_pid';
+            (function(){
+                try{
+                    let p=localStorage.getItem(PID_KEY);
+                    if(!p||p.length<6){ p='u'+Date.now().toString(36)+randStr(5); localStorage.setItem(PID_KEY,p); }
+                    myPid=p;
+                }catch(e){ myPid='u'+Date.now().toString(36)+randStr(5); }
+            })();
+
+            function netStatus(txt,isErr){
+                const el=document.getElementById('netStatus');
+                if(!el) return;
+                if(!txt){ el.classList.add('hidden'); return; }
+                el.textContent=txt;
+                el.classList.remove('hidden');
+                el.style.borderColor=isErr?'rgba(255,82,82,0.5)':'rgba(79,195,247,0.4)';
+                el.style.color=isErr?'#ff8a80':'#4fc3f7';
+            }
+
+            function connectWS(force){
+                if(mqtt && mqtt.connected) return mqtt;
+                if(mqtt && !force) return mqtt;
+                if(mqtt){ try{ mqtt.destroy(); }catch(e){} mqtt=null; }
+                const url=MQTT_BROKERS[brokerIdx%MQTT_BROKERS.length];
+                netStatus('正在连接对战服务器...');
+                mqtt=new MiniMQTT({
+                    url,
+                    clientId:'s360_'+myPid+'_'+randStr(4),
+                    keepalive:25,
+                    willTopic:SIG_TOPIC,
+                    willPayload:JSON.stringify({type:'host_offline',pid:myPid,roomCode:currentRoomCode||null,clientId:'s360_'+myPid}),
+                    onState:s=>{ mqttReady=(s==='open'); },
+                    onConnect:()=>{
+                        mqttReady=true;
+                        netStatus('');
+                        if(currentRoomCode) subscribeRoom(currentRoomCode);
+                        else mqtt.subscribe(SIG_TOPIC);
+                        const q=pendingOut; pendingOut=[];
+                        for(const m of q) sendWs(m,true);
+                        renderRoomList();
+                    },
+                    onMessage:(topic,bytes,str)=>onNetMessage(topic,bytes,str),
+                    onClose:()=>{ mqttReady=false; netStatus('连接断开，正在重连...',true); }
+                });
+                try{ mqtt.connect(); }catch(e){ netStatus('无法连接对战服务器',true); }
+                return mqtt;
+            }
+
+            function failoverBroker(){
+                brokerIdx++;
+                try{ if(mqtt) mqtt.destroy(); }catch(e){}
+                mqtt=null; mqttReady=false;
+                setTimeout(()=>connectWS(true),300);
+            }
+
+            function sendWs(msg,viaReady){
+                if(!msg||!msg.type) return;
+                if(!mqtt) connectWS();
+                if(msg.type==='__state'&&msg.bytes){
+                    if(mqtt&&mqtt.connected) mqtt.publish(rsTopic(msg.roomCode),msg.bytes);
+                    return;
+                }
+                const payload=JSON.stringify(msg);
+                if(mqtt&&mqtt.connected){
+                    let topic;
+                    if(msg.type==='input'||msg.type==='boost_activate'||msg.type==='boost_deactivate'||msg.type==='join'||msg.type==='leave'||msg.type==='ready'||msg.type==='rename'||msg.type==='host_offline'){
+                        topic=rpTopic(msg.roomCode||currentRoomCode);
+                    } else if(msg.type==='room_list'){
+                        topic=SIG_TOPIC;
+                    } else {
+                        topic=SIG_TOPIC;
+                    }
+                    mqtt.publish(topic,payload);
+                } else if(!viaReady){
+                    if(pendingOut.length<30) pendingOut.push(msg);
+                    connectWS();
+                }
+            }
+
+            function onNetMessage(topic,bytes,str){
+                // 房主二进制状态
+                if(topic.indexOf(TP+'s/')===0){
+                    if(hostSim) return;
+                    const code=topic.slice((TP+'s/').length);
+                    if(code!==currentRoomCode) return;
+                    const st=decodeState(bytes);
+                    if(st) applyBinaryState(st);
+                    return;
+                }
+                // 玩家上行（仅房主处理）
+                if(topic.indexOf(TP+'p/')===0){
+                    if(!hostSim) return;
+                    const code=topic.slice((TP+'p/').length);
+                    if(code!==currentRoomCode) return;
+                    handlePlayerUplink(str);
+                    return;
+                }
+                // 房间信令
+                if(topic.indexOf(TP+'q/')===0){
+                    if(!str) return;
+                    let msg; try{ msg=JSON.parse(str); }catch(e){ return; }
+                    if(msg.pid===myPid&&!msg.toPid) return;
+                    if(msg.toPid&&msg.toPid!==myPid) return;
+                    handleWsMsg(msg);
+                    return;
+                }
+                // 全局信令
+                if(topic===SIG_TOPIC&&str){
+                    let msg; try{ msg=JSON.parse(str); }catch(e){ return; }
+                    if(msg.pid===myPid) return;
+                    handleSignal(msg);
+                }
+            }
+
+            function handlePlayerUplink(str){
+                if(!str||!hostSim) return;
+                let msg; try{ msg=JSON.parse(str); }catch(e){ return; }
+                switch(msg.type){
+                    case 'input': if(typeof msg.angle==='number') hostSim.input(msg.pid,msg.angle); break;
+                    case 'boost_activate': hostSim.boost(msg.pid,true); break;
+                    case 'boost_deactivate': hostSim.boost(msg.pid,false); break;
+                    case 'join':{
+                        const r=hostSim.addPlayer({pid:msg.pid,name:msg.name,color:msg.color,ready:!!msg.ready});
+                        if(!r.ok){
+                            pubRoomTo(msg.pid,{type:'room_error',message:r.error,pid:myPid});
+                        } else {
+                            versusMeta[msg.pid]={name:r.player.name,color:r.player.color};
+                            pubRoomTo(msg.pid,{type:'room_joined',playerId:msg.pid,roomCode:currentRoomCode,hostPid:myPid,pid:myPid,players:hostSim.playerList()});
+                            broadcastRoomState();
+                            publishRoomAdvert();
+                        }
+                        break;
+                    }
+                    case 'ready': hostSim.setReady(msg.pid,msg.ready); broadcastRoomState(); break;
+                    case 'rename': hostSim.renamePlayer(msg.pid,msg.name); if(versusMeta[msg.pid]) versusMeta[msg.pid].name=msg.name; broadcastRoomState(); break;
+                    case 'leave':
+                    case 'host_offline': case 'offline':
+                        hostSim.removePlayer(msg.pid); delete versusMeta[msg.pid]; broadcastRoomState(); break;
+                }
+            }
+
+            function pubRoom(obj){
+                if(!mqtt||!mqtt.connected||!currentRoomCode) return;
+                obj.roomCode=currentRoomCode;
+                obj.hostPid=myPid;
+                mqtt.publish(rqTopic(currentRoomCode),JSON.stringify(obj));
+            }
+            function pubRoomTo(pid,m){
+                if(!mqtt||!mqtt.connected||!currentRoomCode) return;
+                m.toPid=pid; m.roomCode=currentRoomCode; m.hostPid=myPid;
+                mqtt.publish(rqTopic(currentRoomCode),JSON.stringify(m));
+            }
+            function broadcastRoomState(){
+                if(!hostSim||!currentRoomCode) return;
+                pubRoom({type:'room_update',players:hostSim.playerList(),hostId:myPid});
+            }
+
+            let roomCache={};
+            function handleSignal(msg){
+                switch(msg.type){
+                    case 'room_list':
+                        roomCache[msg.roomCode]={...msg,ts:Date.now()};
+                        renderRoomList();
+                        break;
+                    case 'room_gone':
+                        delete roomCache[msg.roomCode];
+                        renderRoomList();
+                        break;
+                    case 'match_request':
+                        if(hostSim&&currentRoomCode&&!hostSim.inGame&&hostSim.players.size<8&&mqtt&&mqtt.connected){
+                            mqtt.publish(rqTopic(currentRoomCode),JSON.stringify({
+                                type:'match_invite',toPid:msg.pid,roomCode:currentRoomCode,hostPid:myPid,playerId:msg.pid
+                            }));
+                        }
+                        break;
+                    case 'match_invite':
+                        if(msg.toPid!==myPid) return;
+                        if(currentRoomCode) return;
+                        doJoinRoom(msg.roomCode);
+                        break;
+                }
+            }
+
+            function renderRoomList(){
+                const els=[document.getElementById('roomListBox'),document.getElementById('roomListBoxInit')].filter(Boolean);
+                if(!els.length) return;
+                const now=Date.now();
+                const list=Object.values(roomCache).filter(r=>now-r.ts<35000&&r.hostPid!==myPid&&(r.count||1)<8);
+                const out=!list.length
+                    ?'<div class="room-empty">暂无公开房间，试试创建或快速匹配</div>'
+                    :list.map(r=>`<div class="room-item" onclick="joinRoomByClick('${r.roomCode}')">
+                        <span class="room-code">${r.roomCode}</span>
+                        <span class="room-info">${escHtml(r.hostName||'房主')} · ${r.count||1}/${r.max||8}人${r.playing?' · 对局中':''}</span>
+                        <span class="room-join">加入 ›</span>
+                    </div>`).join('');
+                els.forEach(el=>{ el.innerHTML=out; });
+            }
+
+            function doJoinRoom(code){
+                connectWS();
+                currentRoomCode=code;
+                subscribeRoom(code);
+                sendWs({type:'join',pid:myPid,name:playerName,color:settings.snakeColor,roomCode:code});
+                netStatus('正在加入房间 '+code+' ...');
+                // 3 秒无人应答 → 提示房间不存在
+                setTimeout(()=>{
+                    if(currentRoomCode===code&&!hostSim&&versusRoomOverlay.classList.contains('hidden')){
+                        netStatus('房间不存在或已结束',true);
+                        setTimeout(()=>netStatus(''),2500);
+                        currentRoomCode=null;
+                        unsubscribeRoom(code);
+                        diffOverlay.classList.remove('hidden');
+                    }
+                },3500);
+            }
+
+            function subscribeRoom(code){
+                if(!mqtt||!mqtt.connected) return;
+                mqtt.subscribe(rqTopic(code));
+                mqtt.subscribe(rsTopic(code));
+            }
+            function unsubscribeRoom(code){
+                if(!mqtt||!mqtt.connected||!code) return;
+                try{ mqtt.unsubscribe(rqTopic(code)); mqtt.unsubscribe(rsTopic(code)); }catch(e){}
+            }
+
+            function applyBinaryState(st){
+                const players=st.players.map(p=>{
+                    const meta=versusMeta[p.pid]||{};
+                    return {
+                        id:p.pid, name:meta.name||('玩家'+p.pid.slice(-3)),
+                        color:meta.color||'green',
+                        score:p.score, alive:p.alive, segments:p.segments
+                    };
+                });
+                versusState.snakes=players;
+                versusState.beans=st.beans.map(b=>({x:b.x,y:b.y,size:CELL*0.55}));
+                // 兼容多种自身 ID 表示（myPid / myPlayerId）
+                const candidates=[myPid,myPlayerId].filter(Boolean);
+                let me=null;
+                for(const cid of candidates){ me=players.find(s=>s.id===cid); if(me) break; }
+                if(me){
+                    scoreEl.textContent=me.score||0;
+                    lengthEl.textContent=me.segments?me.segments.length:0;
+                    speedEl.textContent='1.4x';
+                }
+                // 若当前没有我的蛇（已淘汰），保持最后显示值不变
+            }
+
+            // ─── WS message handler ────────────────────
+            function handleWsMsg(msg){
+                switch(msg.type){
+                    case 'room_created':
+                        myPlayerId=msg.playerId;
+                        currentRoomCode=msg.roomCode;
+                        currentInviteCode=msg.inviteCode||null;
+                        showVersusRoom();
+                        break;
+                    case 'room_joined':
+                        myPlayerId=msg.playerId;
+                        currentRoomCode=msg.roomCode;
+                        showVersusRoom();
+                        break;
+                    case 'room_update':
+                        updateVersusPlayerList(msg.players,msg.hostId);
+                        break;
+                    case 'game_start':
+                        startVersusGame(msg);
+                        break;
+                    case 'game_state':
+                        versusState.snakes=msg.snakes||[];
+                        versusState.beans=msg.beans||[];
+                        // Update header score/length/speed for my snake
+                        const me=msg.snakes&&msg.snakes.find(s=>s.id===myPlayerId);
+                        if(me){
+                            scoreEl.textContent=me.score||0;
+                            lengthEl.textContent=me.segments?me.segments.length:0;
+                            speedEl.textContent='1.4x';
+                        }
+                        break;
+                    case 'you_dead':
+                        showVersusDeadScreen(msg);
+                        break;
+                    case 'you_dead_msg':
+                        showVersusDeadScreen(msg);
+                        break;
+                    case 'player_dead':
+                        showKillNotification(msg);
+                        break;
+                    case 'game_over':
+                        showVersusGameOver(msg);
+                        break;
+                    case 'spectate_confirmed':
+                        versusDeadOverlay.classList.add('hidden');
+                        versusState.isSpectator=true;
+                        break;
+                    case 'exit_confirmed':
+                        versusDeadOverlay.classList.add('hidden');
+                        versusState.active=false;
+                        showVersusRoom();
+                        break;
+                    case 'room_error':
+                        alert(msg.message);
+                        break;
+                    case 'quick_match_waiting':
+                        document.getElementById('quickMatchStatus').textContent='已进入匹配队列，等待对手...';
+                        break;
+                    case 'quick_match_found':
+                        quickMatchOverlay.classList.add('hidden');
+                        showVersusRoom();
+                        break;
+                    case 'quick_match_cancelled':
+                        quickMatchOverlay.classList.add('hidden');
+                        diffOverlay.classList.remove('hidden');
+                        break;
+                    // ── MQTT 消息类型 ──
+                    case 'game_start_msg':
+                        startVersusGame(msg);
+                        break;
+                    case 'game_over_msg':
+                        if(msg.result){ versusState.active=false; showVersusGameOver(msg.result); }
+                        break;
+                    case 'kill_notify':
+                        showKillNotification(msg);
+                        break;
+                    case 'room_closed':
+                        versusState.active=false;
+                        versusRoomOverlay.classList.add('hidden');
+                        versusGameOverOverlay.classList.add('hidden');
+                        versusDeadOverlay.classList.add('hidden');
+                        document.getElementById('boostBtn').classList.add('hidden');
+                        currentRoomCode=null; roomHostPid=null;
+                        diffOverlay.classList.remove('hidden');
+                        netStatus('房主已解散房间',true);
+                        setTimeout(()=>netStatus(''),2600);
+                        break;
+                    case 'host_offline':
+                        // 房主掉线：玩家退出对局
+                        versusState.active=false;
+                        versusRoomOverlay.classList.add('hidden');
+                        versusGameOverOverlay.classList.add('hidden');
+                        versusDeadOverlay.classList.add('hidden');
+                        document.getElementById('boostBtn').classList.add('hidden');
+                        currentRoomCode=null; roomHostPid=null;
+                        diffOverlay.classList.remove('hidden');
+                        netStatus('房主已离开，房间关闭',true);
+                        setTimeout(()=>netStatus(''),2600);
+                        break;
+                }
+            }
+
+            // ─── Room UI ────────────────────────────────
+            function showVersusRoom(){
+                versusState.active=false;
+                const rw=document.getElementById('roomCodeDisplay'), rt=document.getElementById('roomCodeText');
+                if(currentRoomCode&&rw&&rt){ rw.style.display=''; rt.textContent=currentRoomCode; }
+                else if(rw){ rw.style.display='none'; }
+                diffOverlay.classList.add('hidden');
+                gameOverOverlay.classList.add('hidden');
+                versusGameOverOverlay.classList.add('hidden');
+                versusDeadOverlay.classList.add('hidden');
+                versusRoomOverlay.classList.remove('hidden');
+                // Hide boost button when in room
+                document.getElementById('boostBtn').classList.add('hidden');
+                // Restore rename link in room
+                if(playerName) document.getElementById('renameLink').style.display='';
+            }
+
+            function updateVersusPlayerList(players,hostId){
+                const list=document.getElementById('versusPlayerList');
+                list.innerHTML=players.map(p=>{
+                    const colorMap=SNAKE_COLORS[p.color];
+                    const colorStyle = p.color==='rainbow' ? 'background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);' : (colorMap?`background:${colorMap.head};`:'background:#888;');
+                    return `<div class="versus-player-item">
+                        <div class="vp-left">
+                            <div class="vp-color" style="${colorStyle}"></div>
+                            <span class="vp-name">${escHtml(p.name)}${p.id===myPlayerId?' (你)':''}</span>
+                            ${p.id===hostId?'<span class="vp-host">房主</span>':''}
+                        </div>
+                        <div>${p.id===hostId?'<span class="vp-host">房主</span>':(p.ready?'<span class="vp-ready">✓ 已准备</span>':'<span class="vp-not-ready">未准备</span>')}</div>
+                    </div>`;
+                }).join('');
+
+                // Show/hide start button for host
+                const startBtn=document.getElementById('versusStartBtn');
+                const readyBtn=document.getElementById('versusReadyBtn');
+                const isHost=hostId===myPlayerId;
+                startBtn.classList.toggle('hidden',!isHost);
+                readyBtn.classList.toggle('hidden',false);
+
+                // Count ready non-host players
+                const nonHostPlayers = players.filter(p => p.id !== hostId);
+                const readyCount = nonHostPlayers.filter(p => p.ready).length;
+                const countStr = isHost ? (' (' + readyCount + '/' + nonHostPlayers.length + ')') : '';
+
+                // Update ready button text
+                const me=players.find(p=>p.id===myPlayerId);
+                if(me && !isHost){
+                    readyBtn.textContent=me.ready?'取消准备':'准备';
+                    readyBtn.classList.toggle('active',me.ready);
+                } else if(me && isHost){
+                    readyBtn.textContent='准备' + countStr;
+                }
+            }
+
+            // ─── Room actions ───────────────────────────
+            window.versusCreateRoom=function(){
+                if(!playerName){ showNameInput(false); return; }
+                doCreateRoom();
+            };
+
+            function makeHostSim(code){
+                if(hostSim) hostSim.destroy();
+                hostSim=new HostSim({
+                    onState:bytes=>{
+                        // 广播给其他玩家
+                        sendWs({type:'__state',bytes,roomCode:code});
+                        // 房主自己也要应用状态（不经过网络）
+                        const st=decodeState(bytes);
+                        if(st) applyBinaryState(st);
+                    },
+                    onPlayerMsg:(pid,m)=>{
+                        if(pid===myPid) handleWsMsg(m);
+                        else pubRoomTo(pid,m);
+                    },
+                    onBroadcast:m=>{
+                        if(m.type==='player_dead'){
+                            pubRoom({type:'kill_notify',playerName:m.playerName,killerName:m.killerName,reason:m.reason});
+                            showKillNotification(m);
+                        } else if(m.type==='game_over'){
+                            versusState.active=false;
+                            pubRoom({type:'game_over_msg',result:m});
+                            showVersusGameOver(m);
+                            if(hostSim) hostSim.inGame=false;
+                            publishRoomAdvert();
+                        }
+                    },
+                    onGameOver:res=>{ saveMatchToLocal(res); }
+                });
+            }
+
+            function doCreateRoom(){ doCreateRoomWithCode(roomCode4()); }
+
+            function doCreateRoomWithCode(code){
+                connectWS();
+                currentRoomCode=code;
+                roomHostPid=myPid;
+                versusMeta={};
+                versusMeta[myPid]={name:playerName,color:settings.snakeColor};
+                makeHostSim(code);
+                hostSim.addPlayer({pid:myPid,name:playerName,color:settings.snakeColor,ready:true});
+                subscribeRoom(code);
+                publishRoomAdvert();
+                handleWsMsg({type:'room_created',playerId:myPid,roomCode:code,hostPid:myPid});
+                broadcastRoomState();
+                netStatus('');
+            }
+
+            let advertTimer=null;
+            function publishRoomAdvert(){
+                if(advertTimer){ clearInterval(advertTimer); advertTimer=null; }
+                const tick=()=>{
+                    if(!currentRoomCode||!hostSim) return;
+                    sendWs({type:'room_list',pid:myPid,roomCode:currentRoomCode,hostPid:myPid,
+                            hostName:playerName,count:hostSim.players.size,max:8,playing:hostSim.inGame});
+                };
+                tick();
+                advertTimer=setInterval(tick,10000);
+            }
+
+            // Quick match
+            let qmTimer=null, qmTries=0;
+            window.quickMatch=function(){
+                if(!playerName){ showNameInput(false); return; }
+                connectWS();
+                quickMatchOverlay.classList.remove('hidden');
+                diffOverlay.classList.add('hidden');
+                qmTries=0;
+                netStatus('');
+                const status=document.getElementById('quickMatchStatus');
+                if(status) status.textContent='正在搜索房间...';
+                const attempt=()=>{
+                    if(currentRoomCode) return;
+                    qmTries++;
+                    sendWs({type:'match_request',pid:myPid,name:playerName,color:settings.snakeColor});
+                    if(qmTries===4&&status) status.textContent='未找到对手，正在创建房间...';
+                    if(qmTries>=5){
+                        cancelQuickMatch(true);
+                        doCreateRoom();
+                        // 加机器人，保证立刻可玩
+                        setTimeout(()=>{
+                            if(hostSim){
+                                hostSim.addPlayer({pid:'bot1',name:'机器人小蛇',color:'blue',ready:true,bot:true});
+                                if(hostSim.players.size<3) hostSim.addPlayer({pid:'bot2',name:'机器人阿豆',color:'orange',ready:true,bot:true});
+                                versusMeta['bot1']={name:'机器人小蛇',color:'blue'};
+                                versusMeta['bot2']={name:'机器人阿豆',color:'orange'};
+                                broadcastRoomState();
+                            }
+                        },300);
+                        return;
+                    }
+                    qmTimer=setTimeout(attempt,1200);
+                };
+                attempt();
+            };
+
+            window.cancelQuickMatch=function(silent){
+                if(qmTimer){ clearTimeout(qmTimer); qmTimer=null; }
+                if(!silent){
+                    quickMatchOverlay.classList.add('hidden');
+                    diffOverlay.classList.remove('hidden');
+                }
+            };
+
+            document.getElementById('cancelQuickMatchBtn').addEventListener('click',()=>{
+                window.cancelQuickMatch();
+            });
+
+            // Invite create: generate invite link, share directly without creating room first
+            // The first person to click the link will auto-create the room
+            window.versusInviteCreate=function(){
+                if(!playerName){ showNameInput(false); return; }
+                // Generate a unique invite code client-side (8 random chars)
+                const chars='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+                let inviteCode='';
+                for(let i=0;i<8;i++) inviteCode+=chars[Math.floor(Math.random()*chars.length)];
+                const link=location.origin+location.pathname+'?invite='+inviteCode;
+                // Try system share first
+                if(navigator.share){
+                    navigator.share({
+                        title:'🐍 贪吃蛇对战',
+                        text:'快来和我一起玩贪吃蛇对战！点击链接加入',
+                        url:link
+                    }).catch(()=>{});
+                }else{
+                    // Fallback: copy link
+                    navigator.clipboard.writeText(link).then(()=>{
+                        alert('链接已复制！粘贴到微信发送给好友，好友点击链接即可加入你的房间');
+                    }).catch(()=>{
+                        const ta=document.createElement('textarea');
+                        ta.value=link;ta.style.position='fixed';ta.style.opacity='0';
+                        document.body.appendChild(ta);ta.select();
+                        document.execCommand('copy');document.body.removeChild(ta);
+                        alert('链接已复制！粘贴到微信发送给好友，好友点击链接即可加入你的房间');
+                    });
+                }
+            };
+
+            window.versusJoinRoom=function(suffix){
+                const inputId=suffix==='init'?'joinRoomInputInit':'joinRoomInput';
+                const code=(document.getElementById(inputId).value||'').toUpperCase().trim();
+                if(code.length<4){ alert('请输入4位房间号'); return; }
+                if(!playerName){ showNameInput(false); return; }
+                doJoinRoom(code);
+            };
+            window.joinRoomByClick=function(code){
+                if(!playerName){ showNameInput(false); return; }
+                doJoinRoom(code);
+            };
+
+            document.getElementById('versusReadyBtn').addEventListener('click',()=>{
+                const readyBtn=document.getElementById('versusReadyBtn');
+                const isReady=readyBtn.classList.contains('active');
+                if(hostSim){ hostSim.setReady(myPid,!isReady); broadcastRoomState(); }
+                else sendWs({type:'ready',ready:!isReady,pid:myPid,roomCode:currentRoomCode});
+            });
+
+            // Versus init length slider
+            let versusInitLen=6;
+            const vilSlider=document.getElementById('versusInitLenSlider');
+            vilSlider.addEventListener('input',()=>{
+                versusInitLen=parseInt(vilSlider.value);
+                document.getElementById('versusInitLenVal').textContent=versusInitLen;
+                document.getElementById('versusInitLenFill').style.width=((versusInitLen-2)/(10-2)*100)+'%';
+            });
+
+            document.getElementById('versusStartBtn').addEventListener('click',()=>{
+                if(!hostSim){ alert('只有房主可以开始游戏'); return; }
+                const readyPlayers=hostSim.playerList().filter(p=>p.ready&&p.id!==myPid);
+                if(readyPlayers.length<1){
+                    // 没有其他玩家 → 补机器人
+                    if(!hostSim.players.has('bot1'))
+                        hostSim.addPlayer({pid:'bot1',name:'机器人小蛇',color:'blue',ready:true,bot:true});
+                    if(!hostSim.players.has('bot2')&&hostSim.players.size<3)
+                        hostSim.addPlayer({pid:'bot2',name:'机器人阿豆',color:'orange',ready:true,bot:true});
+                    broadcastRoomState();
+                }
+                versusMeta={};
+                hostSim.playerList().forEach(p=>{ versusMeta[p.id]={name:p.name,color:p.color}; });
+                // 通知所有玩家开局
+                hostSim.playerList().forEach(p=>{
+                    if(p.id!==myPid) pubRoomTo(p.id,{type:'game_start_msg',initLen:versusInitLen,matchId:hostSim.matchId});
+                });
+                startVersusGame({});
+                if(advertTimer){ clearInterval(advertTimer); advertTimer=null; }
+                setTimeout(()=>{
+                    if(!hostSim.startGame(versusInitLen)){
+                        alert('开局失败，请稍后重试');
+                    }
+                },260);
+            });
+
+            document.getElementById('versusLeaveBtn').addEventListener('click',()=>{ leaveRoom(); });
+
+            function leaveRoom(){
+                const old=currentRoomCode;
+                if(hostSim){
+                    if(mqtt&&mqtt.connected&&old){
+                        try{ mqtt.publish(rqTopic(old),JSON.stringify({type:'room_closed',roomCode:old,pid:myPid,hostPid:myPid})); }catch(e){}
+                        try{ mqtt.publish(SIG_TOPIC,JSON.stringify({type:'room_gone',roomCode:old,pid:myPid})); }catch(e){}
+                    }
+                    hostSim.destroy(); hostSim=null;
+                    if(advertTimer){ clearInterval(advertTimer); advertTimer=null; }
+                } else if(old){
+                    sendWs({type:'leave',pid:myPid,roomCode:old});
+                }
+                currentRoomCode=null;
+                currentInviteCode=null;
+                roomHostPid=null;
+                versusMeta={};
+                versusState.active=false;
+                versusState.snakes=[];
+                versusState.beans=[];
+                unsubscribeRoom(old);
+                if(mqtt&&mqtt.connected) mqtt.subscribe(SIG_TOPIC);
+                netStatus('');
+                versusRoomOverlay.classList.add('hidden');
+                versusDeadOverlay.classList.add('hidden');
+                versusGameOverOverlay.classList.add('hidden');
+                document.getElementById('boostBtn').classList.add('hidden');
+                diffOverlay.classList.remove('hidden');
+            }
+            window.leaveRoom=leaveRoom;
+
+            // ─── Game start ─────────────────────────────
+            function startVersusGame(msg){
+                versusRoomOverlay.classList.add('hidden');
+                versusDeadOverlay.classList.add('hidden');
+                versusGameOverOverlay.classList.add('hidden');
+                versusState.active=true;
+                versusState.isSpectator=false;
+                versusState.gameOver=false;
+                versusState.snakes=[];
+                versusState.beans=[];
+                document.getElementById('restartBtn').style.display='none';
+                diffBadge.textContent='对战'; diffBadge.className='difficulty-badge custom'; diffBadge.style.display='';
+                // Disable rename during versus game
+                document.getElementById('renameLink').style.display='none';
+                // Show boost button
+                document.getElementById('boostBtn').classList.remove('hidden');
+                startRecording(); // begin recording frames
+            }
+
+            // ─── Kill notification ──────────────────────
+            let killNotifyTimeout=null;
+            function showKillNotification(msg){
+                const el=document.getElementById('killNotify');
+                if(msg.killerName){
+                    el.innerHTML=`<span style="color:#ff5252;font-weight:700;">${escHtml(msg.killerName)}</span> 击杀了 <span style="color:#ffd740;font-weight:700;">${escHtml(msg.playerName)}</span>`;
+                } else {
+                    el.innerHTML=`<span style="color:#ffd740;font-weight:700;">${escHtml(msg.playerName)}</span> 撞墙身亡`;
+                }
+                el.classList.remove('hidden');
+                el.classList.add('show');
+                if(killNotifyTimeout) clearTimeout(killNotifyTimeout);
+                killNotifyTimeout=setTimeout(()=>{
+                    el.classList.remove('show');
+                    setTimeout(()=>el.classList.add('hidden'),300);
+                },2500);
+            }
+
+            // ─── Dead screen ────────────────────────────
+            function showVersusDeadScreen(msg){
+                document.getElementById('deadRanking').textContent=`排名: #${msg.ranking} / ${msg.totalPlayers}`;
+                versusDeadOverlay.classList.remove('hidden');
+            }
+
+            document.getElementById('versusSpectateBtn').addEventListener('click',()=>{
+                versusDeadOverlay.classList.add('hidden');
+                versusState.isSpectator=true;
+                netStatus('👁 观战中 · 等待本局结束');
+                setTimeout(()=>netStatus(''),2500);
+            });
+
+            document.getElementById('versusExitBtn').addEventListener('click',()=>{
+                versusDeadOverlay.classList.add('hidden');
+                versusState.isSpectator=true;
+                netStatus('👁 观战中 · 等待本局结束');
+                setTimeout(()=>netStatus(''),2500);
+            });
+
+            // ─── Game over ──────────────────────────────
+            function showVersusGameOver(msg){
+                versusState.gameOver=true;
+                versusDeadOverlay.classList.add('hidden');
+                versusState.active=false;
+                // Stop recording and save replay
+                if(msg.matchId) stopRecording(msg.matchId);
+
+                const title=document.getElementById('versusGameOverTitle');
+                const winnerText=document.getElementById('versusWinnerText');
+                if(msg.winner){
+                    if(msg.winner.id===myPlayerId){
+                        title.textContent='🏆 胜利！';
+                        title.style.color='#ffd740';
+                    } else {
+                        title.textContent='游戏结束';
+                        title.style.color='#fff';
+                    }
+                    winnerText.textContent=`冠军: ${msg.winner.name}`;
+                } else {
+                    title.textContent='游戏结束';
+                    title.style.color='#fff';
+                    winnerText.textContent='平局';
+                }
+
+                const list=document.getElementById('versusRankingList');
+                list.innerHTML=msg.ranking.map((r,i)=>{
+                    const isMe=r.id===myPlayerId;
+                    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
+                    const survivalSec=Math.round((r.survivalTicks||0)/30*10)/10;
+                    return `<div class="versus-rank-item ${isMe?'me':''}">
+                        <span>${medal} ${escHtml(r.name)}${isMe?' (你)':''} ${r.alive?'<span style="color:#66bb6a;font-size:10px;">存活</span>':''}</span>
+                        <span style="color:rgba(255,255,255,0.5);">⏱ ${survivalSec}s · ${r.score}分</span>
+                    </div>`;
+                }).join('');
+
+                versusGameOverOverlay.classList.remove('hidden');
+            }
+
+            // Click anywhere on versus game over to exit back to room
+            versusGameOverOverlay.addEventListener('click',(e)=>{
+                versusGameOverOverlay.classList.add('hidden');
+                versusState.gameOver=false;
+                // Always return to versus room
+                showVersusRoom();
+            });
+
+            // ─── Auto-join room from URL ────────────────
+            let autoJoiningFromInvite=false;
+            (function autoJoinFromURL(){
+                const params=new URLSearchParams(location.search);
+                const inviteCode=params.get('invite');
+                if(inviteCode && inviteCode.length>=4){
+                    autoJoiningFromInvite=true;
+                    // Hide initial menu immediately, show room overlay right away
+                    diffOverlay.classList.add('hidden');
+                    nameOverlay.classList.add('hidden');
+                    versusRoomOverlay.classList.remove('hidden');
+                    // Auto-generate guest name if no name set
+                    if(!playerName){
+                        playerName=generateGuestName();
+                        localStorage.setItem(NAME_KEY,playerName);
+                        updatePlayerNameUI();
+                    }
+                    // 等 MQTT 就绪 → 尝试加入；无人应答则由我建房
+                    let tries=0, done=false;
+                    const targetCode=inviteCode.slice(0,4).toUpperCase();
+                    const tryJoin=()=>{
+                        if(done) return;
+                        if(mqtt&&mqtt.connected){
+                            currentRoomCode=targetCode;
+                            subscribeRoom(targetCode);
+                            sendWs({type:'join',pid:myPid,name:playerName,color:settings.snakeColor,roomCode:targetCode,inviteCode});
+                            netStatus('正在加入房间 '+targetCode+' ...');
+                            if(history.replaceState) history.replaceState(null,'',location.pathname);
+                            // 3 秒无应答 → 我当房主
+                            setTimeout(()=>{
+                                if(done||hostSim) return;
+                                if(!versusRoomOverlay.classList.contains('hidden')){
+                                    const cnt=document.getElementById('versusPlayerList').children.length;
+                                    if(cnt>0) return;
+                                }
+                                done=true;
+                                currentRoomCode=null;
+                                doCreateRoomWithCode(targetCode);
+                            },3200);
+                        } else {
+                            tries++;
+                            if(tries>24){ doCreateRoom(); return; }
+                            setTimeout(tryJoin,300);
+                        }
+                    };
+                    setTimeout(tryJoin,400);
+                }
+            })();
+
+            // ─── Boost skill (versus mode) ──────────────
+            const BOOST_DURATION=2000;   // 2 seconds active
+            const BOOST_COOLDOWN=5000;   // 5 seconds cooldown
+            const BOOST_MULTIPLIER=2;    // 2x speed
+            let boostActive=false;
+            let boostOnCooldown=false;
+            let boostTimer=null;
+            let boostCooldownTimer=null;
+            let boostCooldownStart=0;
+
+            const boostBtn=document.getElementById('boostBtn');
+
+            function updateBoostCooldownVisual(){
+                if(!boostOnCooldown){
+                    boostBtn.style.background='rgba(100,181,246,0.3)';
+                    boostBtn.style.borderColor='rgba(100,181,246,0.6)';
+                    return;
+                }
+                const elapsed=Date.now()-boostCooldownStart;
+                const ratio=Math.min(elapsed/BOOST_COOLDOWN,1);
+                // Interpolate from gray back to blue
+                const r=Math.round(255*ratio+100*(1-ratio));
+                const g=Math.round(255*ratio+181*(1-ratio));
+                const b=Math.round(255*ratio+246*(1-ratio));
+                const a=0.08+ratio*0.22;
+                const ba=0.15+ratio*0.45;
+                boostBtn.style.background=`rgba(${r},${g},${b},${a})`;
+                boostBtn.style.borderColor=`rgba(${r},${g},${b},${ba})`;
+                if(ratio<1){
+                    requestAnimationFrame(updateBoostCooldownVisual);
+                }
+            }
+
+            function activateBoost(){
+                if(boostOnCooldown||boostActive) return;
+                if(!versusState.active||!versusState.snakes.length) return;
+
+                boostActive=true;
+                boostBtn.style.background='rgba(100,200,255,0.7)';
+                boostBtn.style.borderColor='rgba(150,220,255,0.9)';
+
+                // 加速
+                if(hostSim) hostSim.boost(myPid,true);
+                else sendWs({type:'boost_activate',pid:myPid,roomCode:currentRoomCode});
+
+                boostTimer=setTimeout(()=>{
+                    // Boost ended, start cooldown
+                    boostActive=false;
+                    if(hostSim) hostSim.boost(myPid,false);
+                    else sendWs({type:'boost_deactivate',pid:myPid,roomCode:currentRoomCode});
+                    startBoostCooldown();
+                },BOOST_DURATION);
+            }
+
+            function startBoostCooldown(){
+                boostOnCooldown=true;
+                boostCooldownStart=Date.now();
+                boostBtn.classList.add('on-cooldown');
+                updateBoostCooldownVisual();
+
+                boostCooldownTimer=setTimeout(()=>{
+                    boostOnCooldown=false;
+                    boostBtn.classList.remove('on-cooldown');
+                    boostBtn.style.background='rgba(100,181,246,0.3)';
+                    boostBtn.style.borderColor='rgba(100,181,246,0.6)';
+                },BOOST_COOLDOWN);
+            }
+
+            boostBtn.addEventListener('click',activateBoost);
+            boostBtn.addEventListener('touchend',e=>{e.preventDefault();activateBoost();});
+
+            // ─── Versus rendering ───────────────────────
+            const MAP_SCALE=4, MAP_SIZE=SIZE*MAP_SCALE; // 2016px full map
+
+            function drawBean(b,ox,oy){
+                const r=b.size;
+                ctx.save();ctx.translate(b.x-ox,b.y-oy);
+                ctx.shadowColor='rgba(255,200,60,0.8)';ctx.shadowBlur=10;
+                ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);
+                const g=ctx.createRadialGradient(-r*0.3,-r*0.3,0,0,0,r);
+                g.addColorStop(0,'#ffe082');g.addColorStop(0.5,'#ffb74d');g.addColorStop(1,'#ff8f00');
+                ctx.fillStyle=g;ctx.fill();ctx.shadowBlur=0;
+                ctx.beginPath();ctx.arc(-r*0.25,-r*0.25,r*0.3,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.5)';ctx.fill();
+                ctx.restore();
+            }
+
+            function drawVersusSnake(snakeData,isMe,ox,oy){
+                const sc=SNAKE_COLORS[snakeData.color]||SNAKE_COLORS.green;
+                const isRainbow=snakeData.color==='rainbow';
+                const segs=snakeData.segments;
+                if(!segs||segs.length===0) return;
+                const alpha=snakeData.alive?1:0.3;
+
+                ctx.globalAlpha=alpha;
+
+                // Body segments (tail to head)
+                for(let i=segs.length-1;i>=1;i--){
+                    const seg=segs[i],t=i/segs.length,scl=0.7+t*0.3;
+                    let fill,stroke;
+                    if(isRainbow&&seg.color){
+                        const c=seg.color,l=Math.min(80,c.l+(i/segs.length)*15);
+                        fill=`hsl(${c.h},${c.s}%,${l}%)`;
+                        stroke=`hsla(${c.h},${c.s}%,${Math.min(70,c.l+5)}%,0.6)`;
+                    } else {
+                        const br=0.3+t*0.5;
+                        fill=`rgb(${sc.body[0]+br*30|0},${sc.body[1]+br*60|0},${sc.body[2]+br*30|0})`;
+                        stroke=`rgba(${sc.bodyStroke[0]+br*30|0},${sc.bodyStroke[1]+br*30|0},${sc.bodyStroke[2]+br*20|0},0.6)`;
+                    }
+                    drawEllipse(seg.x-ox,seg.y-oy,seg.angle,SEGMENT_LENGTH*0.45*scl,SEGMENT_WIDTH*0.4*scl,fill,stroke);
+                }
+
+                // Head
+                const head=segs[0];
+                let headFill,headGlow;
+                if(isRainbow&&head.color){
+                    const c=head.color;
+                    headFill=`hsl(${c.h},${c.s}%,${Math.min(70,c.l+15)}%)`;
+                    headGlow=`hsla(${c.h},${c.s}%,${c.l}%,0.6)`;
+                } else {
+                    headFill=sc.head; headGlow=sc.glow;
+                }
+                const hx=head.x-ox, hy=head.y-oy;
+                ctx.save();ctx.translate(hx,hy);ctx.rotate(head.angle);
+                if(isMe){ ctx.shadowColor=headGlow; ctx.shadowBlur=20; }
+                else { ctx.shadowColor=headGlow; ctx.shadowBlur=10; }
+                ctx.beginPath();ctx.ellipse(0,0,SEGMENT_LENGTH*0.55,SEGMENT_WIDTH*0.48,0,0,Math.PI*2);ctx.fillStyle=headFill;ctx.fill();ctx.shadowBlur=0;
+                ctx.beginPath();ctx.ellipse(2,-3,SEGMENT_LENGTH*0.2,SEGMENT_WIDTH*0.18,0,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.35)';ctx.fill();
+                const eox=SEGMENT_LENGTH*0.3,eoy=SEGMENT_WIDTH*0.28;
+                for(const[ex,ey]of[[eox,-eoy],[eox,eoy]]){ctx.beginPath();ctx.arc(ex,ey,4,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.beginPath();ctx.arc(ex+1.5,ey,2,0,Math.PI*2);ctx.fillStyle='#111';ctx.fill();}
+                ctx.restore();
+
+                // Name tag
+                ctx.globalAlpha=1;
+                ctx.fillStyle=isMe?'#fff':'rgba(255,255,255,0.7)';
+                ctx.font=isMe?'bold 11px sans-serif':'11px sans-serif';
+                ctx.textAlign='center';
+                ctx.fillText(snakeData.name+(isMe?' (你)':''), hx, hy-18);
+                ctx.globalAlpha=1;
+            }
+
+            // Draw arrow pointing towards off-screen enemy
+            function drawEnemyArrow(fromX,fromY,toX,toY,color){
+                const angle=Math.atan2(toY-fromY,toX-fromX);
+                // Clamp arrow position to edge of screen with margin
+                const margin=30;
+                const cx=SIZE/2, cy=SIZE/2;
+                let ax=cx+Math.cos(angle)*9999, ay=cy+Math.sin(angle)*9999;
+                // Clamp to screen bounds
+                const halfW=SIZE/2-margin, halfH=SIZE/2-margin;
+                const dx=Math.cos(angle), dy=Math.sin(angle);
+                const tx=dx>0? halfW/dx : -halfW/(-dx);
+                const ty=dy>0? halfH/dy : -halfH/(-dy);
+                const t=Math.min(Math.abs(tx),Math.abs(ty));
+                ax=cx+dx*t; ay=cy+dy*t;
+
+                ctx.save();ctx.translate(ax,ay);ctx.rotate(angle);
+                ctx.fillStyle=color;
+                ctx.shadowColor=color; ctx.shadowBlur=8;
+                ctx.beginPath();
+                ctx.moveTo(10,0);ctx.lineTo(-6,-7);ctx.lineTo(-3,0);ctx.lineTo(-6,7);
+                ctx.closePath();ctx.fill();
+                ctx.shadowBlur=0;
+                ctx.restore();
+            }
+
+            function renderVersus(){
+                ctx.clearRect(0,0,SIZE,SIZE);
+                ctx.fillStyle='#0f0f23';
+                ctx.fillRect(0,0,SIZE,SIZE);
+
+                // Find my snake to center viewport
+                const mySnake=versusState.snakes.find(s=>s.id===myPlayerId);
+                let camX=0, camY=0;
+                if(mySnake && mySnake.segments && mySnake.segments.length>0){
+                    camX=mySnake.segments[0].x - SIZE/2;
+                    camY=mySnake.segments[0].y - SIZE/2;
+                }
+                // Clamp camera to map bounds
+                camX=Math.max(0,Math.min(camX, MAP_SIZE-SIZE));
+                camY=Math.max(0,Math.min(camY, MAP_SIZE-SIZE));
+                // If spectator with no snake, center on map
+                if(!mySnake || !mySnake.segments || mySnake.segments.length===0){
+                    // Follow first alive snake
+                    const firstAlive=versusState.snakes.find(s=>s.alive && s.segments && s.segments.length>0);
+                    if(firstAlive){
+                        camX=firstAlive.segments[0].x - SIZE/2;
+                        camY=firstAlive.segments[0].y - SIZE/2;
+                        camX=Math.max(0,Math.min(camX, MAP_SIZE-SIZE));
+                        camY=Math.max(0,Math.min(camY, MAP_SIZE-SIZE));
+                    }
+                }
+
+                // Draw grid (viewport-relative)
+                ctx.strokeStyle='rgba(255,255,255,0.03)';ctx.lineWidth=0.5;
+                const gridOffsetX=camX%CELL, gridOffsetY=camY%CELL;
+                for(let i=0;i<=GRID;i++){
+                    const p=i*CELL-gridOffsetX;
+                    if(p<0||p>SIZE)continue;
+                    ctx.beginPath();ctx.moveTo(p,0);ctx.lineTo(p,SIZE);ctx.stroke();
+                }
+                for(let i=0;i<=GRID;i++){
+                    const p=i*CELL-gridOffsetY;
+                    if(p<0||p>SIZE)continue;
+                    ctx.beginPath();ctx.moveTo(0,p);ctx.lineTo(SIZE,p);ctx.stroke();
+                }
+
+                // Draw wall glow at map edges (viewport-relative)
+                const wallL=-camX, wallT=-camY, wallR=MAP_SIZE-camX, wallB=MAP_SIZE-camY;
+                ctx.strokeStyle='rgba(255,60,60,0.4)';ctx.lineWidth=2;
+                ctx.shadowColor='rgba(255,40,40,0.6)';ctx.shadowBlur=8;
+                if(wallL>=0&&wallL<=SIZE){ctx.beginPath();ctx.moveTo(wallL,0);ctx.lineTo(wallL,SIZE);ctx.stroke();}
+                if(wallR>=0&&wallR<=SIZE){ctx.beginPath();ctx.moveTo(wallR,0);ctx.lineTo(wallR,SIZE);ctx.stroke();}
+                if(wallT>=0&&wallT<=SIZE){ctx.beginPath();ctx.moveTo(0,wallT);ctx.lineTo(SIZE,wallT);ctx.stroke();}
+                if(wallB>=0&&wallB<=SIZE){ctx.beginPath();ctx.moveTo(0,wallB);ctx.lineTo(SIZE,wallB);ctx.stroke();}
+                ctx.shadowBlur=0;
+
+                // Beans (only draw visible ones)
+                for(const b of versusState.beans){
+                    const bx=b.x-camX, by=b.y-camY;
+                    if(bx>-CELL&&bx<SIZE+CELL&&by>-CELL&&by<SIZE+CELL) drawBean(b,camX,camY);
+                }
+
+                // Snakes: others first, then me (on top) — only draw visible
+                const others=versusState.snakes.filter(s=>s.id!==myPlayerId);
+                for(const sd of others){
+                    if(!sd.segments||sd.segments.length===0) continue;
+                    const h=sd.segments[0];
+                    // Check if any segment is visible
+                    let visible=false;
+                    for(const seg of sd.segments){
+                        if(seg.x-camX>-SEGMENT_LENGTH*2&&seg.x-camX<SIZE+SEGMENT_LENGTH*2&&seg.y-camY>-SEGMENT_LENGTH*2&&seg.y-camY<SIZE+SEGMENT_LENGTH*2){visible=true;break;}
+                    }
+                    if(visible) drawVersusSnake(sd,false,camX,camY);
+                }
+                if(mySnake) drawVersusSnake(mySnake,true,camX,camY);
+
+                // Draw enemy arrows for off-screen enemies
+                const arrowColors=['#ff5252','#4fc3f7','#ffd740','#ab47bc','#66bb6a','#ff8f00','#26c6da','#ec407a'];
+                if(mySnake && mySnake.segments && mySnake.segments.length>0){
+                    const myHead=mySnake.segments[0];
+                    let arrowIdx=0;
+                    for(const sd of others){
+                        if(!sd.alive||!sd.segments||sd.segments.length===0) continue;
+                        const eh=sd.segments[0];
+                        // Check if enemy is off-screen
+                        const ex=eh.x-camX, ey=eh.y-camY;
+                        if(ex<0||ex>SIZE||ey<0||ey>SIZE){
+                            const color=arrowColors[arrowIdx%arrowColors.length];
+                            drawEnemyArrow(SIZE/2,SIZE/2,ex,ey,color);
+                            arrowIdx++;
+                        }
+                    }
+                }
+
+                // Spectator badge
+                if(versusState.isSpectator){
+                    ctx.fillStyle='rgba(255,152,0,0.8)';
+                    ctx.font='bold 12px sans-serif';
+                    ctx.textAlign='center';
+                    ctx.fillText('👁 观战中', SIZE/2, 16);
+                }
+
+                // Minimap (top-right corner)
+                drawMinimap(camX,camY);
+            }
+
+            function drawMinimap(camX,camY){
+                const mmSize=70, mmX=SIZE-mmSize-6, mmY=6;
+                const scale=mmSize/MAP_SIZE;
+                // Background
+                ctx.fillStyle='rgba(0,0,0,0.5)';
+                ctx.fillRect(mmX,mmY,mmSize,mmSize);
+                ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=1;
+                ctx.strokeRect(mmX,mmY,mmSize,mmSize);
+                // Viewport rect
+                ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=1;
+                ctx.strokeRect(mmX+camX*scale,mmY+camY*scale,SIZE*scale,SIZE*scale);
+                // Snakes as dots
+                for(const sd of versusState.snakes){
+                    if(!sd.segments||sd.segments.length===0) continue;
+                    const h=sd.segments[0];
+                    const px=mmX+h.x*scale, py=mmY+h.y*scale;
+                    const sc=SNAKE_COLORS[sd.color];
+                    ctx.fillStyle=sd.alive?(sc?sc.head:'#888'):'rgba(100,100,100,0.4)';
+                    ctx.beginPath();ctx.arc(px,py,sd.id===myPlayerId?2.5:1.5,0,Math.PI*2);ctx.fill();
+                }
+            }
+
+            // ─── Versus input ───────────────────────────
+            let lastSentAngle=null, lastSendTime=0;
+            function maybeSendVersusInput(angle){
+                if(!versusState.active) return;
+                const now=Date.now();
+                const changed=lastSentAngle===null||Math.abs(angle-lastSentAngle)>0.05;
+                if(changed||now-lastSendTime>90){
+                    if(hostSim) hostSim.input(myPid,angle);
+                    else sendWs({type:'input',angle:angle,pid:myPid,roomCode:currentRoomCode});
+                    lastSentAngle=angle; lastSendTime=now;
+                }
+            }
+
+            // ─── Match recording & history ─────────────
+            let versusFrames=[]; // recorded frames for replay
+            let versusRecordTimer=null;
+            let currentMatchId=null;
+            const REPLAY_KEY='snake360_replays';
+            const MAX_REPLAY_FRAMES=180; // 3 min at 1fps
+
+            function getReplays(){
+                try{ return JSON.parse(localStorage.getItem(REPLAY_KEY)||'[]'); }catch{ return []; }
+            }
+            function saveReplays(arr){
+                // Keep only last 10 replays to avoid localStorage overflow
+                if(arr.length>5) arr=arr.slice(-5);
+                try{ localStorage.setItem(REPLAY_KEY,JSON.stringify(arr)); }catch(e){
+                    // If too large, remove oldest and retry
+                    arr=arr.slice(-3);
+                    try{ localStorage.setItem(REPLAY_KEY,JSON.stringify(arr)); }catch{}
+                }
+            }
+
+            function startRecording(){
+                versusFrames=[];
+                if(versusRecordTimer) clearInterval(versusRecordTimer);
+                versusRecordTimer=setInterval(()=>{
+                    if(!versusState.active) return;
+                    try{
+                        const frame=canvas.toDataURL('image/jpeg',0.3);
+                        versusFrames.push(frame);
+                        if(versusFrames.length>MAX_REPLAY_FRAMES) versusFrames.shift();
+                    }catch{}
+                },1000); // 1 frame per second
+            }
+
+            function stopRecording(matchId){
+                if(versusRecordTimer){ clearInterval(versusRecordTimer); versusRecordTimer=null; }
+                if(matchId && versusFrames.length>0){
+                    const replays=getReplays();
+                    replays.push({ matchId, frames:versusFrames, timestamp:Date.now() });
+                    saveReplays(replays);
+                }
+                versusFrames=[];
+            }
+
+            // ─── History UI ────────────────────────────
+            const versusHistoryOverlay=document.getElementById('versusHistoryOverlay');
+            const versusDetailOverlay=document.getElementById('versusDetailOverlay');
+            const versusReplayOverlay=document.getElementById('versusReplayOverlay');
+
+            // ── 本地战绩存储 ──
+            const MATCH_KEY='snake360_matches', MATCH_MAX=30;
+            function getAllMatchesRaw(){ try{ const o=JSON.parse(localStorage.getItem(MATCH_KEY)||'{}'); return (o&&typeof o==='object')?o:{}; }catch(e){ return {}; } }
+            function getMatches(){
+                try{
+                    const all=getAllMatchesRaw(), pl=playerName||'';
+                    const arr=Object.values(all).filter(m=>m&&Array.isArray(m.players)&&m.players.some(p=>p.name===pl));
+                    arr.sort((a,b)=>b.timestamp-a.timestamp);
+                    return arr;
+                }catch(e){ return []; }
+            }
+            function saveMatchToLocal(result){
+                try{
+                    const all=getAllMatchesRaw();
+                    all[result.matchId]={
+                        matchId:result.matchId, timestamp:Date.now(),
+                        durationSec:result.durationSec, playerCount:result.playerCount,
+                        players:result.ranking.map(r=>({name:r.name,color:r.color,rank:r.rank,score:r.score,alive:!!r.alive})),
+                        ranking:result.ranking.map(r=>({name:r.name,rank:r.rank})),
+                    };
+                    const keys=Object.keys(all);
+                    if(keys.length>MATCH_MAX){
+                        keys.sort((a,b)=>(all[a].timestamp||0)-(all[b].timestamp||0));
+                        for(let i=0;i<keys.length-MATCH_MAX;i++) delete all[keys[i]];
+                    }
+                    localStorage.setItem(MATCH_KEY,JSON.stringify(all));
+                }catch(e){}
+            }
+
+            async function loadVersusHistory(){
+                const list=document.getElementById('versusHistoryList');
+                list.innerHTML='<div style="color:rgba(255,255,255,0.4);text-align:center;">加载中...</div>';
+                try{
+                    const matches=getMatches();
+                    if(!matches||matches.length===0){
+                        list.innerHTML='<div style="color:rgba(255,255,255,0.4);text-align:center;">暂无对战记录</div>';
+                        return;
+                    }
+                    const myName=playerName||'';
+                    list.innerHTML=matches.map(m=>{
+                        const mine=m.ranking?m.ranking.find(r=>r.name===myName):null;
+                        const rankText=mine?`#${mine.rank}`:'-';
+                        const date=new Date(m.timestamp);
+                        const timeStr=(date.getMonth()+1)+'/'+date.getDate()+' '+String(date.getHours()).padStart(2,'0')+':'+String(date.getMinutes()).padStart(2,'0');
+                        return `<div class="history-item" onclick="showMatchDetail('${m.matchId}')">
+                            <div class="hi-left">
+                                <span class="hi-rank">排名 ${rankText}</span>
+                                <span class="hi-time">${timeStr} · ${m.playerCount}人</span>
+                            </div>
+                            <span class="hi-duration">⏱ ${m.durationSec}s</span>
+                        </div>`;
+                    }).join('');
+                }catch(e){
+                    list.innerHTML='<div style="color:rgba(255,255,255,0.4);text-align:center;">加载失败</div>';
+                }
+            }
+
+            async function showMatchDetail(matchId){
+                try{
+                    const m=getAllMatchesRaw()[matchId];
+                    if(!m) return;
+                    if(!m.ranking) m.ranking=[];
+
+                    const content=document.getElementById('versusDetailContent');
+                    const myRank=m.ranking.find(r=>r.name===playerName);
+                    const date=new Date(m.timestamp);
+                    const timeStr=date.toLocaleString('zh-CN');
+
+                    // Check if replay is available locally
+                    const replays=getReplays();
+                    const hasReplay=replays.some(rp=>rp.matchId===matchId);
+
+                    content.innerHTML=`
+                        <div class="history-detail-section">
+                            <h3>📊 对局信息</h3>
+                            <div class="history-player-row"><span>时间</span><span>${timeStr}</span></div>
+                            <div class="history-player-row"><span>时长</span><span>${m.durationSec}秒</span></div>
+                            <div class="history-player-row"><span>人数</span><span>${m.playerCount}人</span></div>
+                            <div class="history-player-row"><span>你的排名</span><span style="color:#ffd740;font-weight:700;">${myRank?'#'+myRank.rank:'未参与'}</span></div>
+                        </div>
+                        <div class="history-detail-section">
+                            <h3>👥 参与玩家</h3>
+                            ${m.players.map(p=>{
+                                const sc=SNAKE_COLORS[p.color];
+                                const colorStyle=p.color==='rainbow'?'background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);':(sc?`background:${sc.head};`:'background:#888;');
+                                return `<div class="history-player-row">
+                                    <span style="display:flex;align-items:center;gap:6px;"><div class="hp-color" style="${colorStyle}"></div>${escHtml(p.name)}</span>
+                                    <span>排名 #${p.rank} · ${p.score}分</span>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                        ${hasReplay?`
+                            <button class="btn btn-primary detail-btn" onclick="playReplay('${matchId}')">▶ 查看录屏回放</button>
+                        `:''}
+                        <button class="btn btn-danger detail-btn" onclick="deleteMatch('${matchId}')">🗑 删除战绩</button>
+                    `;
+                    versusDetailOverlay.classList.remove('hidden');
+                }catch(e){
+                    alert('加载详情失败');
+                }
+            }
+
+            window.showMatchDetail=showMatchDetail;
+
+            function playReplay(matchId){
+                const replays=getReplays();
+                const rp=replays.find(r=>r.matchId===matchId);
+                if(!rp) return;
+                versusDetailOverlay.classList.add('hidden');
+                versusReplayOverlay.classList.remove('hidden');
+
+                const rc=document.getElementById('replayCanvas');
+                const rctx=rc.getContext('2d');
+                const speedSel=document.getElementById('replaySpeed');
+                speedSel.value='1'; // reset to 1x
+                let frameIdx=0;
+                let playing=false;
+                let replayTimer=null;
+
+                function getInterval(){
+                    const speed=parseInt(speedSel.value)||1;
+                    return 1000/speed;
+                }
+
+                function drawFrame(){
+                    if(frameIdx>=rp.frames.length){
+                        playing=false;
+                        clearInterval(replayTimer);
+                        document.getElementById('replayPlayBtn').textContent='▶ 重播';
+                        return;
+                    }
+                    const img=new Image();
+                    img.onload=()=>{
+                        rctx.clearRect(0,0,rc.width,rc.height);
+                        rctx.drawImage(img,0,0,rc.width,rc.height);
+                    };
+                    img.src=rp.frames[frameIdx];
+                    frameIdx++;
+                }
+
+                function togglePlay(){
+                    if(playing){
+                        playing=false;
+                        clearInterval(replayTimer);
+                        document.getElementById('replayPlayBtn').textContent='▶ 继续';
+                    } else {
+                        playing=true;
+                        if(frameIdx>=rp.frames.length) frameIdx=0;
+                        drawFrame();
+                        replayTimer=setInterval(drawFrame,getInterval());
+                        document.getElementById('replayPlayBtn').textContent='⏸ 暂停';
+                    }
+                }
+
+                // Speed change handler — restart interval with new speed
+                speedSel.onchange=()=>{
+                    if(playing){
+                        clearInterval(replayTimer);
+                        replayTimer=setInterval(drawFrame,getInterval());
+                    }
+                };
+
+                document.getElementById('replayPlayBtn').onclick=togglePlay;
+                document.getElementById('replayBackBtn').onclick=()=>{
+                    if(replayTimer) clearInterval(replayTimer);
+                    versusReplayOverlay.classList.add('hidden');
+                    versusDetailOverlay.classList.remove('hidden');
+                };
+
+                // Auto-start
+                frameIdx=0;
+                togglePlay();
+            }
+
+            window.playReplay=playReplay;
+
+            async function deleteMatch(matchId){
+                // Delete from server
+                try{ const all=getAllMatchesRaw(); delete all[matchId]; localStorage.setItem(MATCH_KEY,JSON.stringify(all)); }catch{}
+                // Also delete local replay
+                let replays=getReplays();
+                replays=replays.filter(r=>r.matchId!==matchId);
+                saveReplays(replays);
+                // Go back to history list
+                versusDetailOverlay.classList.add('hidden');
+                versusHistoryOverlay.classList.remove('hidden');
+                loadVersusHistory(); // refresh list
+            }
+
+            window.deleteMatch=deleteMatch;
+
+            // History button events
+            (function(){
+                const btn=document.getElementById('copyRoomCodeBtn');
+                if(!btn) return;
+                btn.addEventListener('click',()=>{
+                    if(!currentRoomCode) return;
+                    const link=location.origin+location.pathname+'?invite='+currentRoomCode;
+                    const done=()=>{ btn.textContent='✅ 已复制'; setTimeout(()=>btn.textContent='📋 复制邀请链接',1500); };
+                    if(navigator.share){
+                        navigator.share({title:'🐍 贪吃蛇对战',text:'点击链接加入我的房间！房间号 '+currentRoomCode,url:link}).then(done).catch(()=>{
+                            if(navigator.clipboard) navigator.clipboard.writeText(link).then(done).catch(done);
+                        });
+                    } else if(navigator.clipboard){
+                        navigator.clipboard.writeText(link).then(done).catch(done);
+                    }
+                });
+            })();
+
+            document.getElementById('versusHistoryBtn').addEventListener('click',()=>{
+                versusRoomOverlay.classList.add('hidden');
+                versusHistoryOverlay.classList.remove('hidden');
+                loadVersusHistory();
+            });
+            document.getElementById('versusHistoryBackBtn').addEventListener('click',()=>{
+                versusHistoryOverlay.classList.add('hidden');
+                versusRoomOverlay.classList.remove('hidden');
+            });
+            document.getElementById('versusDetailBackBtn').addEventListener('click',()=>{
+                versusDetailOverlay.classList.add('hidden');
+                versusHistoryOverlay.classList.remove('hidden');
+            });
+
+            // Init
+            updatePlayerNameUI();
+            updateUI();
+            // 预连接对战服务器
+            try{
+                connectWS();
+                if(mqtt) mqtt.subscribe(SIG_TOPIC);
+            }catch(e){}
+            // 定期清理过期房间广告
+            setInterval(renderRoomList,12000);
+            // Preload leaderboard so it's ready when user opens the tab
+            loadLeaderboard(currentLbTab);
+            if(autoJoiningFromInvite){
+                // Skip — already handled by autoJoinFromURL
+            } else if(!playerName){
+                // First time — show name input first
+                showNameInput(true);
+            } else {
+                showMainMenu();
+            }
+            window.addEventListener('beforeunload',()=>{
+                try{
+                    if(currentRoomCode&&mqtt&&mqtt.connected){
+                        const t=hostSim?rqTopic(currentRoomCode):rpTopic(currentRoomCode);
+                        mqtt.publish(t,JSON.stringify({type:hostSim?'room_closed':'leave',pid:myPid,roomCode:currentRoomCode}));
+                    }
+                }catch(e){}
+            });
+
+            function gameLoop(){
+                frameCount++;
+                if(versusState.active){
+                    renderVersus();
+                } else {
+                    updateSnake();
+                    render();
+                }
+                requestAnimationFrame(gameLoop);
+            }
+            gameLoop();
+        })();
+    </script>
+</body>
+</html>
